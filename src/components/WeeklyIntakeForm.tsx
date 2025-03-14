@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,7 @@ const WeeklyIntakeForm = () => {
     dateRequested: "",
     fundingAvailable: false,
     fundCode: "",
+    cost: "", // New cost field
     
     // Support Needs section
     cmsFullSupport: false,
@@ -177,6 +177,19 @@ const WeeklyIntakeForm = () => {
                   value={formData.fundCode}
                   onChange={(e) => handleInputChange("fundCode", e.target.value)}
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="cost">Cost:</Label>
+                <div className="flex items-center">
+                  <span className="mr-2">$</span>
+                  <Input 
+                    id="cost" 
+                    value={formData.cost}
+                    onChange={(e) => handleInputChange("cost", e.target.value)}
+                    placeholder="Enter cost"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
