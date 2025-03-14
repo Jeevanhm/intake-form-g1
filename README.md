@@ -1,8 +1,23 @@
-# Welcome to your Lovable project
+
+# Weekly Intake Form
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/e399a7a6-2e82-4843-ae7c-8979d951f708
+
+## About this project
+
+This is a digital weekly intake form for IT infrastructure requests. This form is used for capturing:
+- Application details
+- Support needs
+- Exceptions
+- Location information
+- Database platforms
+- Server counts
+- Environment requirements
+- Storage needs
+
+The form is designed to be user-friendly with Yes/No toggles, text fields, and text areas for capturing detailed information.
 
 ## How can I edit this code?
 
@@ -36,34 +51,14 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Technologies used
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e399a7a6-2e82-4843-ae7c-8979d951f708) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- React Hook Form for form state management
+- date-fns for date formatting
