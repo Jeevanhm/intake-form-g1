@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -111,7 +112,7 @@ const WeeklyIntakeForm = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-center flex-grow">Weekly Intake – Week of </h1>
+        <h1 className="text-2xl font-bold text-center flex-grow">Weekly Intake</h1>
         <Input 
           type="text"
           placeholder="MM/DD/YYYY"
