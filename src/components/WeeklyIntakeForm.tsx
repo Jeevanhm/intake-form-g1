@@ -11,7 +11,9 @@ import { toast } from "sonner";
 const WeeklyIntakeForm = () => {
   const currentDate = new Date();
   const formattedDate = format(currentDate, "MM/dd/yyyy");
-  const weekFormatted = format(currentDate, "MM/dd/yyyy");
+  
+  // State for the week date
+  const [weekDate, setWeekDate] = useState(formattedDate);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -108,7 +110,16 @@ const WeeklyIntakeForm = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">Weekly Intake – Week of {weekFormatted}</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-center flex-grow">Weekly Intake – Week of </h1>
+        <Input 
+          type="text"
+          placeholder="MM/DD/YYYY"
+          value={weekDate}
+          onChange={(e) => setWeekDate(e.target.value)}
+          className="w-32"
+        />
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
