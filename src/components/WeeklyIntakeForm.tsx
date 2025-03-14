@@ -112,10 +112,10 @@ const WeeklyIntakeForm = () => {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* App Name Section */}
+          {/* Application Name Section */}
           <Card>
             <CardHeader className="bg-gray-200 py-2">
-              <CardTitle className="text-center text-base font-medium">App Name</CardTitle>
+              <CardTitle className="text-center text-base font-medium">Application Name</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               <div className="space-y-2">
@@ -371,7 +371,7 @@ const WeeklyIntakeForm = () => {
               <div className="space-y-2">
                 <Label htmlFor="azureVolume">Azure Volume:</Label>
                 <div className="flex items-center">
-                  <span className="mr-2">&lt;in TB&gt;</span>
+                  <span className="mr-2">GB</span>
                   <Input 
                     id="azureVolume" 
                     value={formData.azureVolume}
@@ -385,7 +385,7 @@ const WeeklyIntakeForm = () => {
               <div className="space-y-2">
                 <Label htmlFor="onPremVolume">On Prem Volume:</Label>
                 <div className="flex items-center">
-                  <span className="mr-2">&lt;in TB&gt;</span>
+                  <span className="mr-2">GB</span>
                   <Input 
                     id="onPremVolume" 
                     value={formData.onPremVolume}
