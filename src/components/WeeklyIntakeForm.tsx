@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const WeeklyIntakeForm = () => {
   const currentDate = new Date();
@@ -14,6 +16,7 @@ const WeeklyIntakeForm = () => {
   
   // State for the week date
   const [weekDate, setWeekDate] = useState(formattedDate);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,10 +88,38 @@ const WeeklyIntakeForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    toast.success("Weekly intake form submitted successfully!");
+    setIsSubmitting(true);
+    
+    try {
+      const submissionData = {
+        ...formData,
+        week_date: weekDate
+      };
+      
+      const { data, error } = await supabase
+        .from('weekly_intake_forms')
+        .insert([submissionData])
+        .select();
+      
+      if (error) {
+        console.error("Error submitting form:", error);
+        toast.error("Failed to submit weekly intake form. Please try again.");
+      } else {
+        console.log("Form submitted successfully:", data);
+        toast.success("Weekly intake form submitted successfully!");
+        
+        // Reset form state if needed
+        // Uncomment the following line if you want to reset the form after submission
+        // setFormData({...}); // Reset to initial state
+      }
+    } catch (err) {
+      console.error("Error in form submission:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderYesNoSwitch = (field: string, label: string = "") => {
@@ -423,8 +454,19 @@ const WeeklyIntakeForm = () => {
         </div>
 
         <div className="flex justify-center">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full md:w-1/3">
-            Submit Weekly Intake
+          <Button 
+            type="submit" 
+            className="bg-blue-600 hover:bg-blue-700 w-full md:w-1/3"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Weekly Intake"
+            )}
           </Button>
         </div>
       </form>

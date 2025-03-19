@@ -9,7 +9,129 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      weekly_intake_forms: {
+        Row: {
+          app_name: string
+          app_owner: string | null
+          azure: boolean | null
+          azure_type: string | null
+          azure_volume: string | null
+          backup: boolean | null
+          cms_full_support: boolean | null
+          cost: string | null
+          created_at: string
+          data_center_location: string | null
+          date_requested: string | null
+          dr: boolean | null
+          dr_count: number | null
+          env_dr: boolean | null
+          env_non_prod: boolean | null
+          env_prod: boolean | null
+          exceptions_to_cms: string | null
+          fund_code: string | null
+          funding_available: boolean | null
+          id: string
+          l1_leadership: string | null
+          location_on_prem: boolean | null
+          location_physical: boolean | null
+          location_reason_for_physical: string | null
+          non_prod_count: number | null
+          on_prem: boolean | null
+          on_prem_volume: string | null
+          oracle: boolean | null
+          other_explain: string | null
+          other_notes: string | null
+          physical: boolean | null
+          prod_count: number | null
+          reason_for_on_prem: string | null
+          reason_for_physical: string | null
+          requestor: boolean | null
+          sql: boolean | null
+          storage_on_prem: boolean | null
+          week_date: string | null
+        }
+        Insert: {
+          app_name: string
+          app_owner?: string | null
+          azure?: boolean | null
+          azure_type?: string | null
+          azure_volume?: string | null
+          backup?: boolean | null
+          cms_full_support?: boolean | null
+          cost?: string | null
+          created_at?: string
+          data_center_location?: string | null
+          date_requested?: string | null
+          dr?: boolean | null
+          dr_count?: number | null
+          env_dr?: boolean | null
+          env_non_prod?: boolean | null
+          env_prod?: boolean | null
+          exceptions_to_cms?: string | null
+          fund_code?: string | null
+          funding_available?: boolean | null
+          id?: string
+          l1_leadership?: string | null
+          location_on_prem?: boolean | null
+          location_physical?: boolean | null
+          location_reason_for_physical?: string | null
+          non_prod_count?: number | null
+          on_prem?: boolean | null
+          on_prem_volume?: string | null
+          oracle?: boolean | null
+          other_explain?: string | null
+          other_notes?: string | null
+          physical?: boolean | null
+          prod_count?: number | null
+          reason_for_on_prem?: string | null
+          reason_for_physical?: string | null
+          requestor?: boolean | null
+          sql?: boolean | null
+          storage_on_prem?: boolean | null
+          week_date?: string | null
+        }
+        Update: {
+          app_name?: string
+          app_owner?: string | null
+          azure?: boolean | null
+          azure_type?: string | null
+          azure_volume?: string | null
+          backup?: boolean | null
+          cms_full_support?: boolean | null
+          cost?: string | null
+          created_at?: string
+          data_center_location?: string | null
+          date_requested?: string | null
+          dr?: boolean | null
+          dr_count?: number | null
+          env_dr?: boolean | null
+          env_non_prod?: boolean | null
+          env_prod?: boolean | null
+          exceptions_to_cms?: string | null
+          fund_code?: string | null
+          funding_available?: boolean | null
+          id?: string
+          l1_leadership?: string | null
+          location_on_prem?: boolean | null
+          location_physical?: boolean | null
+          location_reason_for_physical?: string | null
+          non_prod_count?: number | null
+          on_prem?: boolean | null
+          on_prem_volume?: string | null
+          oracle?: boolean | null
+          other_explain?: string | null
+          other_notes?: string | null
+          physical?: boolean | null
+          prod_count?: number | null
+          reason_for_on_prem?: string | null
+          reason_for_physical?: string | null
+          requestor?: boolean | null
+          sql?: boolean | null
+          storage_on_prem?: boolean | null
+          week_date?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
