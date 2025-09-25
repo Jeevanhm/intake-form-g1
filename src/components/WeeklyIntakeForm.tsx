@@ -6,6 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { mapFormDataToSupabase } from "@/utils/formDataMapper";
+import AppNameSection from "./weekly-intake/AppNameSection";
+import SupportNeedsSection from "./weekly-intake/SupportNeedsSection";
+import ExceptionsSection from "./weekly-intake/ExceptionsSection";
+import LocationSection from "./weekly-intake/LocationSection";
+import DatabasePlatformsSection from "./weekly-intake/DatabasePlatformsSection";
+import OtherNotesSection from "./weekly-intake/OtherNotesSection";
+import ServerCountSection from "./weekly-intake/ServerCountSection";
+import EnvironmentsSection from "./weekly-intake/EnvironmentsSection";
+import StorageNeedsSection from "./weekly-intake/StorageNeedsSection";
 
 const WeeklyIntakeForm = () => {
   const currentDate = new Date();
