@@ -14,7 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      weekly_intake_forms: {
+        Row: {
+          app_name: string
+          app_owner: string
+          azure: boolean
+          azure_type: string | null
+          azure_volume: string | null
+          backup: boolean
+          cms_full_support: boolean
+          cost: number | null
+          created_at: string
+          data_center_location: string | null
+          date_requested: string
+          dr: boolean
+          dr_count: number
+          env_dr: boolean
+          env_non_prod: boolean
+          env_prod: boolean
+          exceptions_to_cms: string | null
+          fund_code: string | null
+          funding_available: boolean
+          id: string
+          l1_leadership: string
+          location_on_prem: boolean
+          location_physical: boolean
+          location_reason_for_physical: string | null
+          non_prod_count: number
+          on_prem: boolean
+          on_prem_volume: string | null
+          oracle: boolean
+          other_explain: string | null
+          other_notes: string | null
+          physical: boolean
+          prod_count: number
+          reason_for_on_prem: string | null
+          reason_for_physical: string | null
+          requestor: string
+          sql: boolean
+          storage_on_prem: string | null
+          updated_at: string
+          week_date: string
+        }
+        Insert: {
+          app_name: string
+          app_owner: string
+          azure?: boolean
+          azure_type?: string | null
+          azure_volume?: string | null
+          backup?: boolean
+          cms_full_support?: boolean
+          cost?: number | null
+          created_at?: string
+          data_center_location?: string | null
+          date_requested: string
+          dr?: boolean
+          dr_count?: number
+          env_dr?: boolean
+          env_non_prod?: boolean
+          env_prod?: boolean
+          exceptions_to_cms?: string | null
+          fund_code?: string | null
+          funding_available?: boolean
+          id?: string
+          l1_leadership: string
+          location_on_prem?: boolean
+          location_physical?: boolean
+          location_reason_for_physical?: string | null
+          non_prod_count?: number
+          on_prem?: boolean
+          on_prem_volume?: string | null
+          oracle?: boolean
+          other_explain?: string | null
+          other_notes?: string | null
+          physical?: boolean
+          prod_count?: number
+          reason_for_on_prem?: string | null
+          reason_for_physical?: string | null
+          requestor: string
+          sql?: boolean
+          storage_on_prem?: string | null
+          updated_at?: string
+          week_date: string
+        }
+        Update: {
+          app_name?: string
+          app_owner?: string
+          azure?: boolean
+          azure_type?: string | null
+          azure_volume?: string | null
+          backup?: boolean
+          cms_full_support?: boolean
+          cost?: number | null
+          created_at?: string
+          data_center_location?: string | null
+          date_requested?: string
+          dr?: boolean
+          dr_count?: number
+          env_dr?: boolean
+          env_non_prod?: boolean
+          env_prod?: boolean
+          exceptions_to_cms?: string | null
+          fund_code?: string | null
+          funding_available?: boolean
+          id?: string
+          l1_leadership?: string
+          location_on_prem?: boolean
+          location_physical?: boolean
+          location_reason_for_physical?: string | null
+          non_prod_count?: number
+          on_prem?: boolean
+          on_prem_volume?: string | null
+          oracle?: boolean
+          other_explain?: string | null
+          other_notes?: string | null
+          physical?: boolean
+          prod_count?: number
+          reason_for_on_prem?: string | null
+          reason_for_physical?: string | null
+          requestor?: string
+          sql?: boolean
+          storage_on_prem?: string | null
+          updated_at?: string
+          week_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
