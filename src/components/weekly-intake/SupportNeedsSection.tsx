@@ -1,8 +1,6 @@
-
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import FormSection from "./FormSection";
+import FormSection, { Field, compactTextarea } from "./FormSection";
 import YesNoSwitch from "./YesNoSwitch";
 
 interface SupportNeedsSectionProps {
@@ -17,22 +15,21 @@ interface SupportNeedsSectionProps {
 const SupportNeedsSection = ({ formData, handleInputChange, handleToggleChange }: SupportNeedsSectionProps) => {
   return (
     <FormSection title="Support Needs">
-      <YesNoSwitch 
-        id="cmsFullSupport" 
-        label="CMS Full Support:" 
-        checked={formData.cmsFullSupport} 
-        onCheckedChange={() => handleToggleChange("cmsFullSupport")} 
+      <YesNoSwitch
+        id="cmsFullSupport"
+        label="CMS Full Support:"
+        checked={formData.cmsFullSupport}
+        onCheckedChange={() => handleToggleChange("cmsFullSupport")}
       />
-      
-      <div className="space-y-2">
-        <Label htmlFor="exceptionsToCMS">Exceptions to CMS Support:</Label>
-        <Textarea 
-          id="exceptionsToCMS" 
+
+      <Field label="Exceptions to CMS Support:" stacked>
+        <Textarea
+          rows={3}
+          className={compactTextarea}
           value={formData.exceptionsToCMS}
           onChange={(e) => handleInputChange("exceptionsToCMS", e.target.value)}
-          className="min-h-[100px]"
         />
-      </div>
+      </Field>
     </FormSection>
   );
 };

@@ -1,8 +1,6 @@
-
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import FormSection from "./FormSection";
+import FormSection, { Field, compactTextarea } from "./FormSection";
 import YesNoSwitch from "./YesNoSwitch";
 
 interface DatabasePlatformsSectionProps {
@@ -18,29 +16,28 @@ interface DatabasePlatformsSectionProps {
 const DatabasePlatformsSection = ({ formData, handleInputChange, handleToggleChange }: DatabasePlatformsSectionProps) => {
   return (
     <FormSection title="Database Platforms">
-      <YesNoSwitch 
-        id="sql" 
-        label="SQL:" 
-        checked={formData.sql} 
-        onCheckedChange={() => handleToggleChange("sql")} 
+      <YesNoSwitch
+        id="sql"
+        label="SQL:"
+        checked={formData.sql}
+        onCheckedChange={() => handleToggleChange("sql")}
       />
-      
-      <YesNoSwitch 
-        id="oracle" 
-        label="Oracle:" 
-        checked={formData.oracle} 
-        onCheckedChange={() => handleToggleChange("oracle")} 
+
+      <YesNoSwitch
+        id="oracle"
+        label="Oracle:"
+        checked={formData.oracle}
+        onCheckedChange={() => handleToggleChange("oracle")}
       />
-      
-      <div className="space-y-2">
-        <Label htmlFor="otherExplain">Other (explain):</Label>
-        <Textarea 
-          id="otherExplain" 
+
+      <Field label="Other (explain):" stacked>
+        <Textarea
+          rows={2}
+          className={compactTextarea}
           value={formData.otherExplain}
           onChange={(e) => handleInputChange("otherExplain", e.target.value)}
-          className="min-h-[100px]"
         />
-      </div>
+      </Field>
     </FormSection>
   );
 };

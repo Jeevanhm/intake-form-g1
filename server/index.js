@@ -1,0 +1,187 @@
+import Database from "better-sqlite3";
+import express from "express";
+import multer from "multer";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { mkdirSync } from "node:fs";
+import { weekKeyFor, writeWeeklyCsv } from "./csv.js";
+import { createAdminAuth } from "./auth.js";
+
+try {
+  process.loadEnvFile(new URL("../.env", import.meta.url));
+} catch {
+  // .env is optional; ADMIN_PASSWORD can also come from the real environment.
+}
+
+const PORT = Number(process.env.API_PORT ?? 3001);
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_APPLICATIONS = 20;
+const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const databasePath = process.env.SQLITE_DB_PATH ?? path.join(projectRoot, "server", "data", "intake.sqlite");
+mkdirSync(path.dirname(databasePath), { recursive: true });
+
+const csvDirectory = process.env.CSV_DIR ?? path.join(projectRoot, "csv-exports");
+
+const database = new Database(databasePath);
+database.pragma("journal_mode = WAL");
+database.exec(`
+  CREATE TABLE IF NOT EXISTS weekly_intake_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    week_date TEXT NOT NULL,
+    form_data TEXT NOT NULL,
+    pdf_name TEXT,
+    pdf_data BLOB,
+    pdf_size INTEGER
+  )
+`);
+
+const insertSubmission = database.prepare(`
+  INSERT INTO weekly_intake_submissions (week_date, form_data, pdf_name, pdf_data, pdf_size)
+  VALUES (@weekDate, @formData, @pdfName, @pdfData, @pdfSize)
+`);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_PDF_SIZE_BYTES, files: MAX_APPLICATIONS, fields: 1, fieldSize: 256 * 1024 },
+  fileFilter: (_request, file, callback) => {
+    if (file.mimetype !== "application/pdf" && !file.originalname.toLowerCase().endsWith(".pdf")) {
+      callback(new Error("Choose a PDF file."));
+      return;
+    }
+    callback(null, true);
+  },
+});
+
+const app = express();
+app.use(express.json({ limit: "1kb" }));
+
+const adminAuth = createAdminAuth(process.env.ADMIN_PASSWORD);
+app.post("/api/admin/login", adminAuth.login);
+app.get("/api/admin/status", adminAuth.status);
+
+app.post("/api/submissions", upload.array("pdf", MAX_APPLICATIONS), (request, response) => {
+  let submissions;
+  try {
+    submissions = JSON.parse(request.body.submission);
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    response.status(400).json({ error: "The submission data is invalid." });
+    return;
+  }
+
+  if (!Array.isArray(submissions) || submissions.length < 1 || submissions.length > MAX_APPLICATIONS) {
+    response.status(400).json({ error: `Submit between 1 and ${MAX_APPLICATIONS} applications at a time.` });
+    return;
+  }
+
+  const files = request.files;
+  const pdfIndexes = new Set();
+  const validSubmissions = submissions.every((submission) => {
+    if (
+      !submission ||
+      typeof submission !== "object" ||
+      Array.isArray(submission) ||
+      typeof submission.weekDate !== "string" ||
+      !submission.formData ||
+      typeof submission.formData !== "object" ||
+      Array.isArray(submission.formData) ||
+      !(submission.pdfIndex === null || Number.isInteger(submission.pdfIndex))
+    ) {
+      return false;
+    }
+
+    if (submission.pdfIndex !== null) {
+      if (submission.pdfIndex < 0 || submission.pdfIndex >= files.length || pdfIndexes.has(submission.pdfIndex)) {
+        return false;
+      }
+      pdfIndexes.add(submission.pdfIndex);
+    }
+    return true;
+  });
+
+  if (!validSubmissions || pdfIndexes.size !== files.length) {
+    response.status(400).json({ error: "The submission data is invalid." });
+    return;
+  }
+
+  if (files.some((pdf) => !pdf.buffer.subarray(0, 5).equals(Buffer.from("%PDF-")))) {
+    response.status(400).json({ error: "An uploaded file is not a valid PDF." });
+    return;
+  }
+
+  const insertBatch = database.transaction((entries) =>
+    entries.map((submission) => {
+      const pdf = submission.pdfIndex === null ? null : files[submission.pdfIndex];
+      const result = insertSubmission.run({
+        weekDate: submission.weekDate,
+        formData: JSON.stringify({ ...submission.formData, weekDate: submission.weekDate }),
+        pdfName: pdf ? path.basename(pdf.originalname.replaceAll("\\", "/")) : null,
+        pdfData: pdf?.buffer ?? null,
+        pdfSize: pdf?.size ?? null,
+      });
+      return Number(result.lastInsertRowid);
+    }),
+  );
+
+  const ids = insertBatch.immediate(submissions);
+  try {
+    const weeks = new Set(
+      submissions.map((submission) => weekKeyFor(submission.weekDate, new Date().toISOString().replace("T", " "))),
+    );
+    weeks.forEach((week) => writeWeeklyCsv(database, csvDirectory, week));
+  } catch (error) {
+    // The submission is already saved; the next submission regenerates the file.
+    console.error("Could not update the daily CSV:", error);
+  }
+  response.status(201).json({ ids });
+});
+
+app.get("/api/submissions/:id/pdf", adminAuth.requireAdmin, (request, response) => {
+  const id = Number(request.params.id);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    response.status(400).json({ error: "The submission ID is invalid." });
+    return;
+  }
+
+  const pdf = database
+    .prepare("SELECT pdf_name, pdf_data FROM weekly_intake_submissions WHERE id = ?")
+    .get(id);
+  if (!pdf?.pdf_data) {
+    response.status(404).json({ error: "No PDF was found for this submission." });
+    return;
+  }
+
+  const safeName = encodeURIComponent(pdf.pdf_name).replaceAll("'", "%27");
+  response
+    .type("application/pdf")
+    .set("Content-Disposition", `attachment; filename*=UTF-8''${safeName}`)
+    .send(pdf.pdf_data);
+});
+
+app.use((error, _request, response, _next) => {
+  if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+    response.status(413).json({ error: "The PDF must be 10 MB or smaller." });
+    return;
+  }
+  if (error instanceof multer.MulterError || error.message === "Choose a PDF file.") {
+    response.status(400).json({ error: error.message });
+    return;
+  }
+
+  console.error("Request failed:", error);
+  response.status(500).json({ error: "The server could not process the submission." });
+});
+
+const distDirectory = path.join(projectRoot, "dist");
+app.use(express.static(distDirectory));
+app.get("/{*splat}", (_request, response, next) => {
+  response.sendFile(path.join(distDirectory, "index.html"), (error) => {
+    if (error) next(error);
+  });
+});
+
+app.listen(PORT, "127.0.0.1", () => {
+  console.log(`Intake API listening at http://127.0.0.1:${PORT}`);
+  console.log(`SQLite database: ${databasePath}`);
+});

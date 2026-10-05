@@ -1,0 +1,25 @@
+id,submitted_at,week_date,pdf_name,pdf_size,appName,requestor,appOwner,l1Leadership,dateRequested,fundingAvailable,fundCode,cost,cmsFullSupport,exceptionsToCMS,backup,dr,physical,reasonForPhysical,onPrem,reasonForOnPrem,azure,locationOnPrem,dataCenterLocation,locationPhysical,locationReasonForPhysical,sql,oracle,otherExplain,prodCount,nonProdCount,drCount,envProd,envNonProd,envDR,azureType,azureVolume,storageOnPrem,onPremVolume,otherNotes,weekDate,approval,appIdApm,cloudService,aiService,cloudAiNotes,approved
+"1","2026-10-04 21:16:51","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","","false","","","","false","","","false","","false","false","false","","false","","false","false","1425/NY6/SunGard","false","","false","false","","0","0","0","false","false","false","ANF","","false","","","10/04/2026","","","","","",""
+"7","2026-10-05 01:54:30","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","","","","","","false","","","false","","false","false","false","","false","","false","false","1425/NY6/SunGard","false","","false","false","","0","0","0","false","false","false","ANF","","false","","","10/04/2026","","","","","",""
+"14","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","","","","","","false","","","false","","false","false","false","","false","","false","false","1425/NY6/SunGard","false","","false","false","","0","0","0","false","false","false","ANF","","false","","","10/04/2026","","","false","false","",""
+"15","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","","","","","","false","","","false","","false","false","false","","false","","false","false","1425/NY6/SunGard","false","","false","false","","0","0","0","false","false","false","ANF","","false","","","10/04/2026","","","false","false","",""
+"16","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","saas","","csadsa","casas","ssdsds","false","css","221","true","asas","true","false","false","","false","zczcxz","true","false","1425/NY6/SunGard","false","","true","false","","2","0","0","true","false","false","Managed Disk","222","false","222","sadasd","10/04/2026","","","false","false","",""
+"17","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","dssdf","","fdssd","sdfsd","","false","dssdf","121","false","cdss","true","false","false","","false","","true","false","1425/NY6/SunGard","false","","false","true","","3","2","0","true","false","false","ANF","1122","false","","xscdscs","10/04/2026","","","false","false","",""
+"18","2026-10-05 02:37:49","10/04/2026","","","ksjdhfksd","sdds","sdsa","dsad","13/12/22","true","sdsds","21131","true","","true","false","false","","false","","true","false","1425/NY6/SunGard","false","","true","false","","2","0","0","true","true","false","Managed Disk","122","false","","dd ds s svfs","10/04/2026","","","false","false","",""
+"19","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","sdsdsd","dsdsds","dsds","dsds","2133","true","ssada","w223","true","","true","false","false","","false","","true","false","EUS","false","","false","false","","4","0","0","true","true","false","Managed Disk","1027","false","","ds,d ,lkhsdkjsh","10/04/2026","","","false","false","",""
+"20","2026-10-05 02:37:49","10/04/2026","","","dfgdgd","gdfgfd","fgdgf","gfg43543","455","true","454tg","345345","true","","true","false","false","","false","","true","false","Azure EUS","false","","true","false","","3","0","0","true","true","false","Managed Disk","13232","false","","dcscdscsd","10/04/2026","","","false","false","",""
+"21","2026-10-05 02:37:49","10/04/2026","Quote_dsads_2026-10-04.pdf","35937","lkf lkf ljflew j lwkjf lf j wkf j ","csd sdf sf s","dsdssd","sdsdsdf","13131","true","edsads","131232","false","","true","false","false","","false","","true","true","Azure EUS","false","","true","false","","4","3","0","true","false","false","Managed Disk","1023","false",""," s  
+fw fre
+f erf
+gv regerger
+gregerger
+
+g
+ergreger
+
+g
+ergerg
+
+reg
+e
+","10/04/2026","","sddsfds","true","false","",""

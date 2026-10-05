@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Switch } from "@/components/ui/switch";
 
@@ -11,19 +10,18 @@ interface YesNoSwitchProps {
 
 const YesNoSwitch = ({ id, label, checked, onCheckedChange }: YesNoSwitchProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="space-x-2">
-        {label && <span>{label}</span>}
-      </div>
-      <div className="flex items-center space-x-2">
-        <Switch 
-          id={id} 
+    <label className="flex items-center justify-between text-xs">
+      <span>{label}</span>
+      <span className="flex items-center gap-1.5">
+        <Switch
+          id={id}
           checked={checked}
           onCheckedChange={onCheckedChange}
+          className="h-4 w-8 [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
         />
-        <span>{checked ? "Yes" : "No"}</span>
-      </div>
-    </div>
+        <span className="w-6">{checked ? "Yes" : "No"}</span>
+      </span>
+    </label>
   );
 };
 

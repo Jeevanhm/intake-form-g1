@@ -1,16 +1,15 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import FormSection from "./FormSection";
+import FormSection, { Field, compactInput } from "./FormSection";
 import YesNoSwitch from "./YesNoSwitch";
 
 interface AppNameSectionProps {
   formData: {
     appName: string;
-    requestor: boolean;
+    requestor: string;
     appOwner: string;
     l1Leadership: string;
+    appIdApm: string;
     dateRequested: string;
     fundingAvailable: boolean;
     fundCode: string;
@@ -23,77 +22,78 @@ interface AppNameSectionProps {
 const AppNameSection = ({ formData, handleInputChange, handleToggleChange }: AppNameSectionProps) => {
   return (
     <FormSection title="Application Name">
-      <div className="space-y-2">
-        <Input 
-          placeholder="Application Name" 
-          value={formData.appName}
-          onChange={(e) => handleInputChange("appName", e.target.value)}
-        />
-      </div>
-      
-      <YesNoSwitch 
-        id="requestor" 
-        label="Requestor:" 
-        checked={formData.requestor} 
-        onCheckedChange={() => handleToggleChange("requestor")} 
+      <Input
+        aria-label="Application Name"
+        placeholder="Application Name"
+        className={compactInput}
+        value={formData.appName}
+        onChange={(e) => handleInputChange("appName", e.target.value)}
       />
-      
-      <div className="space-y-2">
-        <Label htmlFor="appOwner">App Owner:</Label>
-        <Input 
-          id="appOwner" 
+
+      <Field label="Requestor Name:">
+        <Input
+          className={compactInput}
+          value={formData.requestor}
+          onChange={(e) => handleInputChange("requestor", e.target.value)}
+        />
+      </Field>
+
+      <Field label="App Owner:">
+        <Input
+          className={compactInput}
           value={formData.appOwner}
           onChange={(e) => handleInputChange("appOwner", e.target.value)}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="l1Leadership">L1 Leadership:</Label>
-        <Input 
-          id="l1Leadership" 
+      </Field>
+
+      <Field label="L1 Leadership:">
+        <Input
+          className={compactInput}
           value={formData.l1Leadership}
           onChange={(e) => handleInputChange("l1Leadership", e.target.value)}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="dateRequested">Date requested for build:</Label>
-        <Input 
-          id="dateRequested" 
+      </Field>
+
+      <Field label="App ID/APM:">
+        <Input
+          className={compactInput}
+          value={formData.appIdApm}
+          onChange={(e) => handleInputChange("appIdApm", e.target.value)}
+        />
+      </Field>
+
+      <Field label="Date requested for build:">
+        <Input
+          className={compactInput}
           placeholder="MM/YY"
           value={formData.dateRequested}
           onChange={(e) => handleInputChange("dateRequested", e.target.value)}
         />
-      </div>
-      
-      <YesNoSwitch 
-        id="fundingAvailable" 
-        label="Funding Available:" 
-        checked={formData.fundingAvailable} 
-        onCheckedChange={() => handleToggleChange("fundingAvailable")}  
+      </Field>
+
+      <YesNoSwitch
+        id="fundingAvailable"
+        label="Funding Available:"
+        checked={formData.fundingAvailable}
+        onCheckedChange={() => handleToggleChange("fundingAvailable")}
       />
-      
-      <div className="space-y-2">
-        <Label htmlFor="fundCode">Fund Code or Project Name:</Label>
-        <Input 
-          id="fundCode" 
+
+      <Field label="Fund Code or Project Name:">
+        <Input
+          className={compactInput}
           value={formData.fundCode}
           onChange={(e) => handleInputChange("fundCode", e.target.value)}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="cost">Cost:</Label>
-        <div className="flex items-center">
-          <span className="mr-2">$</span>
-          <Input 
-            id="cost" 
-            value={formData.cost}
-            onChange={(e) => handleInputChange("cost", e.target.value)}
-            placeholder="Enter cost"
-          />
-        </div>
-      </div>
+      </Field>
+
+      <Field label="Cost ($):">
+        <Input
+          className={compactInput}
+          value={formData.cost}
+          onChange={(e) => handleInputChange("cost", e.target.value)}
+          placeholder="Enter cost"
+        />
+      </Field>
     </FormSection>
   );
 };

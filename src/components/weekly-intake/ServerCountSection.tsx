@@ -1,8 +1,6 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import FormSection from "./FormSection";
+import FormSection, { compactInput } from "./FormSection";
 
 interface ServerCountSectionProps {
   formData: {
@@ -13,40 +11,28 @@ interface ServerCountSectionProps {
   handleInputChange: (field: string, value: number) => void;
 }
 
+const counts = [
+  { field: "prodCount", label: "Prod" },
+  { field: "nonProdCount", label: "Non Prod" },
+  { field: "drCount", label: "DR" },
+] as const;
+
 const ServerCountSection = ({ formData, handleInputChange }: ServerCountSectionProps) => {
   return (
     <FormSection title="Server Count">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="prodCount">Prod:</Label>
-        <Input 
-          id="prodCount" 
-          type="number"
-          value={formData.prodCount}
-          onChange={(e) => handleInputChange("prodCount", Number(e.target.value))}
-          className="w-16 text-right"
-        />
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <Label htmlFor="nonProdCount">Non Prod:</Label>
-        <Input 
-          id="nonProdCount" 
-          type="number"
-          value={formData.nonProdCount}
-          onChange={(e) => handleInputChange("nonProdCount", Number(e.target.value))}
-          className="w-16 text-right"
-        />
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <Label htmlFor="drCount">DR:</Label>
-        <Input 
-          id="drCount" 
-          type="number"
-          value={formData.drCount}
-          onChange={(e) => handleInputChange("drCount", Number(e.target.value))}
-          className="w-16 text-right"
-        />
+      <div className="grid grid-cols-3 gap-2">
+        {counts.map(({ field, label }) => (
+          <label key={field} className="flex flex-col gap-1 text-xs">
+            <span>{label}:</span>
+            <Input
+              type="number"
+              min={0}
+              value={formData[field]}
+              onChange={(e) => handleInputChange(field, Number(e.target.value))}
+              className={`${compactInput} text-right`}
+            />
+          </label>
+        ))}
       </div>
     </FormSection>
   );
