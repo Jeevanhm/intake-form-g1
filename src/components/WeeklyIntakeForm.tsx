@@ -424,25 +424,6 @@ const WeeklyIntakeForm = () => {
                     </button>
                   )}
                   {pdfError && <span id={errorId} className="text-xs text-destructive">{pdfError}</span>}
-                  {index === 0 && (
-                    isAdmin ? (
-                      <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={adminLogout}>
-                        <LogOut className="mr-1 h-3 w-3" />
-                        Admin sign out
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setLoginOpen(true)}
-                      >
-                        <Lock className="mr-1 h-3 w-3" />
-                        Admin sign in
-                      </Button>
-                    )
-                  )}
                   {index === 0 && isAdmin && (
                     <Button
                       type="button"
@@ -469,6 +450,25 @@ const WeeklyIntakeForm = () => {
                       <Trash2 className="mr-1 h-3 w-3" />
                       Remove application
                     </Button>
+                  )}
+                  {index === 0 && (
+                    isAdmin ? (
+                      <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={adminLogout}>
+                        <LogOut className="mr-1 h-3 w-3" />
+                        Admin sign out
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setLoginOpen(true)}
+                      >
+                        <Lock className="mr-1 h-3 w-3" />
+                        Admin sign in
+                      </Button>
+                    )
                   )}
                 </div>
               </div>
