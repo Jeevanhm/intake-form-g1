@@ -24,7 +24,7 @@ for tool in dnf systemctl; do
   fi
 done
 
-dnf install -y git gcc-c++ make nginx openssl policycoreutils-python-utils
+dnf install -y git gcc-c++ make nginx openssl policycoreutils-python-utils gcc-toolset-12-gcc-c++
 
 if ! command -v node >/dev/null 2>&1 || ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 20 ? 0 : 1)'; then
   dnf module reset -y nodejs
@@ -84,17 +84,32 @@ if ! grep -q 'APP_BASE_PATH' "$APP_DIR/server/index.js" ||
 fi
 
 chown -R root:root "$APP_DIR"
+cd "$APP_DIR"
+npm_config_python="$NODE_GYP_PYTHON" npm ci
+APP_BASE_PATH="$APP_PATH" npm run build
+npm prune --omit=dev
+
+# The prebuilt better-sqlite3 binary needs a newer glibc than RHEL 8 has, and it takes
+# priority over a source build, so remove it and compile with a C++20-capable GCC.
+rm -f node_modules/better-sqlite3/prebuilds/*.node
+(
+  set +u
+  # shellcheck disable=SC1091
+  source /opt/rh/gcc-toolset-12/enable
+  set -u
+  cd node_modules/better-sqlite3
+  npm_config_python="$NODE_GYP_PYTHON" npm run build-release
+)
+test -f node_modules/better-sqlite3/build/Release/better_sqlite3.node
+
+# Let the service account read the app (including the compiled module).
 chgrp -R "$SERVICE_USER" "$APP_DIR"
 chmod -R g+rX "$APP_DIR"
 if [[ -f "$APP_DIR/.env" ]]; then
   chmod 0600 "$APP_DIR/.env"
 fi
-cd "$APP_DIR"
-npm_config_python="$NODE_GYP_PYTHON" npm ci
-npm_config_build_from_source=true npm_config_python="$NODE_GYP_PYTHON" \
-  npm rebuild better-sqlite3 --build-from-source
-APP_BASE_PATH="$APP_PATH" npm run build
-npm prune --omit=dev
+sudo -u "$SERVICE_USER" "$(command -v node)" -e \
+  'const D = require("/opt/intake-form/node_modules/better-sqlite3"); new D(":memory:").close()'
 
 install -d -o "$SERVICE_USER" -g "$SERVICE_USER" "$DATA_DIR" "$DATA_DIR/csv-exports"
 install -d -o root -g root -m 0750 "$(dirname "$ENV_FILE")"
