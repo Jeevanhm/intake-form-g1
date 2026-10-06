@@ -355,6 +355,9 @@ const WeeklyIntakeForm = () => {
     void submitApplications(applications);
   };
 
+  // After an admin has submitted everything, only a blank form is left, so there is nothing to submit.
+  const showSubmit = !(isAdmin && applications.length === 1 && !applications[0].formData.appName.trim());
+
   const currentApplication = applications.find((application) => application.id === currentId) ?? applications[0];
 
   return (
@@ -387,6 +390,7 @@ const WeeklyIntakeForm = () => {
             <Button type="submit" className="w-full" disabled={isLoggingIn || !adminPassword}>
               {isLoggingIn ? "Signing in..." : "Sign in"}
             </Button>
+          )}
           </form>
         </DialogContent>
       </Dialog>
@@ -642,6 +646,7 @@ const WeeklyIntakeForm = () => {
               Submit this application only{currentApplication.formData.appName ? ` (${currentApplication.formData.appName})` : ""}
             </Button>
           )}
+          {showSubmit && (
           <Button
             type="submit"
             variant={applications.length > 1 ? "outline" : "default"}
