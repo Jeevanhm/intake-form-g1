@@ -41,13 +41,13 @@ The server listens on `127.0.0.1:3001` by default. Set `API_PORT` to change the 
 
 ## Deploying on RHEL 8
 
-The deployment script installs its RHEL packages, enables the RHEL 8 Node.js 20 module if needed, installs Python 3.11 (or Python 3.9) for compiling the native SQLite dependency, clones the repository to `/opt/intake-form` (or fast-forward pulls it if it is already cloned), and builds the app. Run it as root:
+The deployment script installs its RHEL packages, enables the RHEL 8 Node.js 20 module if needed, installs Python 3.11 (or Python 3.9) for compiling the native SQLite dependency, clones the repository to `/opt/intake-form` (or fast-forward pulls it if it is already cloned), forces `better-sqlite3` to compile from source for RHEL's glibc, and builds the app. Run it as root:
 
 ```bash
 sudo bash deploy.sh
 ```
 
-The script builds the app, configures the Node service to listen locally on `127.0.0.1:3001`, and configures Nginx to serve it at `https://10.113.130.18:8444/weeklyintake` with a self-signed TLS certificate. Browsers will warn until the certificate is trusted. SQLite and CSV exports are stored under `/var/lib/intake-form`. If it creates an admin password, it prints it once; save it securely. Permit inbound TCP port 8444 only from approved internal client networks.
+The script builds the app, configures the Node service to listen locally on `127.0.0.1:3002`, and configures Nginx to serve it at `https://10.113.130.18:8444/weeklyintake` with a self-signed TLS certificate. Browsers will warn until the certificate is trusted. SQLite and CSV exports are stored under `/var/lib/intake-form`. If it creates an admin password, it prints it once; save it securely. Permit inbound TCP port 8444 only from approved internal client networks.
 
 ## Technologies used
 

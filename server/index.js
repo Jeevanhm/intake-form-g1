@@ -188,7 +188,9 @@ app.get(routePath("/{*splat}"), (_request, response, next) => {
   });
 });
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, (error) => {
+  // Express 5 passes startup errors (such as EADDRINUSE) to this callback.
+  if (error) throw error;
   console.log(`Intake API listening at http://${HOST}:${PORT}`);
   console.log(`SQLite database: ${databasePath}`);
 });

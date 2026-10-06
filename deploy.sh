@@ -9,7 +9,7 @@ ENV_FILE="/etc/intake-form/intake-form.env"
 DATA_DIR="/var/lib/intake-form"
 SERVER_IP="10.113.130.18"
 APP_PATH="/weeklyintake"
-NODE_PORT="3001"
+NODE_PORT="3002"
 HTTPS_PORT="8444"
 
 if [[ "${EUID}" -ne 0 ]]; then
@@ -84,8 +84,15 @@ if ! grep -q 'APP_BASE_PATH' "$APP_DIR/server/index.js" ||
 fi
 
 chown -R root:root "$APP_DIR"
+chgrp -R "$SERVICE_USER" "$APP_DIR"
+chmod -R g+rX "$APP_DIR"
+if [[ -f "$APP_DIR/.env" ]]; then
+  chmod 0600 "$APP_DIR/.env"
+fi
 cd "$APP_DIR"
 npm_config_python="$NODE_GYP_PYTHON" npm ci
+npm_config_build_from_source=true npm_config_python="$NODE_GYP_PYTHON" \
+  npm rebuild better-sqlite3 --build-from-source
 APP_BASE_PATH="$APP_PATH" npm run build
 npm prune --omit=dev
 
