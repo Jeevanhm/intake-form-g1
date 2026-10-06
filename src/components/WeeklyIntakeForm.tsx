@@ -88,6 +88,10 @@ const WeeklyIntakeForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applications, setApplications] = useState<ApplicationEntry[]>([createApplication(1)]);
   const [submitError, setSubmitError] = useState("");
+  const [activeId, setActiveId] = useState(1);
+  const currentId = applications.some((application) => application.id === activeId)
+    ? activeId
+    : applications[0].id;
   const nextApplicationId = useRef(2);
   const csvInputRef = useRef<HTMLInputElement | null>(null);
   const [preview, setPreview] = useState<{ url: string; name: string } | null>(null);
@@ -251,6 +255,7 @@ const WeeklyIntakeForm = () => {
       }));
 
       setApplications(loaded);
+      setActiveId(loaded[0].id);
       pdfInputRefs.current = {};
       const csvWeek = records[0].weekDate || records[0].week_date;
       if (csvWeek) setWeekDate(csvWeek);
@@ -296,6 +301,7 @@ const WeeklyIntakeForm = () => {
     if (applications.length >= MAX_APPLICATIONS) return;
     const id = nextApplicationId.current++;
     setApplications((current) => [...current, createApplication(id)]);
+    setActiveId(id);
   };
 
   const removeApplication = (id: number) => {
@@ -399,12 +405,30 @@ const WeeklyIntakeForm = () => {
       </Dialog>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+        {applications.length > 1 && (
+          <div role="tablist" className="flex flex-wrap gap-1">
+            {applications.map((application, index) => (
+              <button
+                key={application.id}
+                type="button"
+                role="tab"
+                aria-selected={application.id === currentId}
+                onClick={() => setActiveId(application.id)}
+                className={`max-w-[14rem] truncate rounded-md border px-3 py-1 text-xs ${
+                  application.id === currentId ? "bg-[#00539B] text-white" : "bg-background hover:bg-muted"
+                }`}
+              >
+                {index + 1}. {application.formData.appName || "New application"}
+              </button>
+            ))}
+          </div>
+        )}
         {applications.map((application, index) => {
           const { id, formData, pdfFiles, pdfError } = application;
           const inputId = `pdf-attachment-${id}`;
           const errorId = `pdf-error-${id}`;
           return (
-            <section key={id} className="space-y-2 rounded-lg border p-3">
+            <section key={id} hidden={id !== currentId} className="space-y-2 rounded-lg border p-3">
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <h2 className="text-base font-semibold">
                   Application {index + 1}{formData.appName ? `: ${formData.appName}` : ""}
