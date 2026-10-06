@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Scale all rem-based sizes with the window so the form fills the screen. */
+html {
+  font-size: clamp(14px, min(2.5vh, 1.5vw), 26px);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -88,6 +93,11 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+}
+
+/* Scale all rem-based sizes with the window so the form fills the screen. */
+html {
+  font-size: clamp(14px, min(2.5vh, 1.5vw), 26px);
 }
 
 @layer base {
