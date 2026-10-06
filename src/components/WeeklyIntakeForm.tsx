@@ -309,22 +309,21 @@ const WeeklyIntakeForm = () => {
     delete pdfInputRefs.current[id];
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitApplications = async (toSubmit: ApplicationEntry[]) => {
     setSubmitError("");
 
     setIsSubmitting(true);
     try {
       const submission = new FormData();
       let pdfIndex = 0;
-      const entries = applications.map((application) => ({
+      const entries = toSubmit.map((application) => ({
         formData: application.formData,
         weekDate,
         pdfIndexes: application.pdfFiles.map(() => pdfIndex++),
       }));
 
       submission.append("submission", JSON.stringify(entries));
-      applications.forEach((application) => {
+      toSubmit.forEach((application) => {
         application.pdfFiles.forEach((file) => submission.append("pdf", file));
       });
 
@@ -337,9 +336,11 @@ const WeeklyIntakeForm = () => {
         throw new Error(result.error ?? "Failed to submit weekly intake forms.");
       }
 
-      toast.success(`${applications.length} application${applications.length === 1 ? "" : "s"} submitted successfully!`);
-      pdfInputRefs.current = {};
-      setApplications([createApplication(nextApplicationId.current++)]);
+      toast.success(`${toSubmit.length} application${toSubmit.length === 1 ? "" : "s"} submitted successfully!`);
+      const submittedIds = new Set(toSubmit.map((application) => application.id));
+      const remaining = applications.filter((application) => !submittedIds.has(application.id));
+      for (const id of submittedIds) delete pdfInputRefs.current[id];
+      setApplications(remaining.length > 0 ? remaining : [createApplication(nextApplicationId.current++)]);
     } catch (error) {
       console.error("Error in form submission:", error);
       setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred. Please try again.");
@@ -348,6 +349,13 @@ const WeeklyIntakeForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submitApplications(applications);
+  };
+
+  const currentApplication = applications.find((application) => application.id === currentId) ?? applications[0];
 
   return (
     <div className="w-full px-3 py-3">
@@ -624,9 +632,20 @@ const WeeklyIntakeForm = () => {
             <p className="text-sm text-muted-foreground">You can submit up to {MAX_APPLICATIONS} applications at once.</p>
           )}
           {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
+          {applications.length > 1 && (
+            <Button
+              type="button"
+              className="w-full bg-blue-600 hover:bg-blue-700 md:w-1/2"
+              disabled={isSubmitting}
+              onClick={() => void submitApplications([currentApplication])}
+            >
+              Submit this application only{currentApplication.formData.appName ? ` (${currentApplication.formData.appName})` : ""}
+            </Button>
+          )}
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 md:w-1/2"
+            variant={applications.length > 1 ? "outline" : "default"}
+            className={`w-full md:w-1/2 ${applications.length > 1 ? "" : "bg-blue-600 hover:bg-blue-700"}`}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
