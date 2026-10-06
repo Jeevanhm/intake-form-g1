@@ -19,6 +19,7 @@ import EnvironmentsSection from "./weekly-intake/EnvironmentsSection";
 import StorageNeedsSection from "./weekly-intake/StorageNeedsSection";
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_PDFS_PER_APPLICATION = 10;
 const MAX_APPLICATIONS = 20;
 const ADMIN_TOKEN_KEY = "intake-admin-token";
 const API_BASE = `${import.meta.env.BASE_URL}api`;
@@ -71,14 +72,14 @@ type ApplicationFormData = ReturnType<typeof createInitialFormData>;
 interface ApplicationEntry {
   id: number;
   formData: ApplicationFormData;
-  pdfFile: File | null;
+  pdfFiles: File[];
   pdfError: string;
 }
 
 const createApplication = (id: number): ApplicationEntry => ({
   id,
   formData: createInitialFormData(),
-  pdfFile: null,
+  pdfFiles: [],
   pdfError: "",
 });
 
@@ -166,22 +167,33 @@ const WeeklyIntakeForm = () => {
     }));
   };
 
-  const handlePdfChange = (id: number, file: File | undefined) => {
+  const handlePdfAdd = (id: number, selected: File[]) => {
     updateApplication(id, (application) => {
-      if (!file) return { ...application, pdfFile: null, pdfError: "" };
-
-      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-        return { ...application, pdfFile: null, pdfError: "Choose a PDF file." };
+      const errors: string[] = [];
+      const accepted = [...application.pdfFiles];
+      for (const file of selected) {
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+          errors.push(`${file.name}: choose a PDF file.`);
+        } else if (file.size > MAX_PDF_SIZE_BYTES) {
+          errors.push(`${file.name}: must be 10 MB or smaller.`);
+        } else if (accepted.length >= MAX_PDFS_PER_APPLICATION) {
+          errors.push(`Only ${MAX_PDFS_PER_APPLICATION} PDFs can be attached to an application.`);
+          break;
+        } else if (!accepted.some((existing) => existing.name === file.name && existing.size === file.size)) {
+          accepted.push(file);
+        }
       }
-
-      if (file.size > MAX_PDF_SIZE_BYTES) {
-        return { ...application, pdfFile: null, pdfError: "The PDF must be 10 MB or smaller." };
-      }
-
-      return { ...application, pdfFile: file, pdfError: "" };
+      return { ...application, pdfFiles: accepted, pdfError: errors.join(" ") };
     });
   };
 
+  const handlePdfRemove = (id: number, index: number) => {
+    updateApplication(id, (application) => ({
+      ...application,
+      pdfFiles: application.pdfFiles.filter((_, position) => position !== index),
+      pdfError: "",
+    }));
+  };
   const handleCsvLoad = async (file: File | undefined) => {
     if (!file || !adminToken) return;
     setSubmitError("");
@@ -209,16 +221,19 @@ const WeeklyIntakeForm = () => {
         const application = createApplication(nextApplicationId.current++);
         application.formData = formData as ApplicationFormData;
         if (record.pdf_name && /^\d+$/.test(record.id ?? "")) {
+          const headers = { Authorization: `Bearer ${adminToken}` };
           try {
-            const pdfResponse = await fetch(`${API_BASE}/submissions/${record.id}/pdf`, {
-              headers: { Authorization: `Bearer ${adminToken}` },
-            });
-            if (pdfResponse.status === 401) adminLogout();
-            if (pdfResponse.ok) {
-              const blob = await pdfResponse.blob();
-              application.pdfFile = new File([blob], record.pdf_name, { type: "application/pdf" });
-            } else {
-              missingPdfs++;
+            const listResponse = await fetch(`${API_BASE}/submissions/${record.id}/pdfs`, { headers });
+            if (listResponse.status === 401) adminLogout();
+            if (!listResponse.ok) throw new Error("Could not list PDFs.");
+            const { files }: { files: { id: number; name: string }[] } = await listResponse.json();
+            for (const file of files) {
+              const pdfResponse = await fetch(`${API_BASE}/submissions/${record.id}/pdfs/${file.id}`, { headers });
+              if (!pdfResponse.ok) {
+                missingPdfs++;
+                continue;
+              }
+              application.pdfFiles.push(new File([await pdfResponse.blob()], file.name, { type: "application/pdf" }));
             }
           } catch {
             missingPdfs++;
@@ -256,27 +271,20 @@ const WeeklyIntakeForm = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError("");
-    if (applications.some((application) => application.pdfError)) {
-      setSubmitError("Fix the PDF attachment errors before submitting.");
-      return;
-    }
 
     setIsSubmitting(true);
     try {
       const submission = new FormData();
       let pdfIndex = 0;
-      const entries = applications.map((application) => {
-        const currentPdfIndex = application.pdfFile ? pdfIndex++ : null;
-        return {
-          formData: application.formData,
-          weekDate,
-          pdfIndex: currentPdfIndex,
-        };
-      });
+      const entries = applications.map((application) => ({
+        formData: application.formData,
+        weekDate,
+        pdfIndexes: application.pdfFiles.map(() => pdfIndex++),
+      }));
 
       submission.append("submission", JSON.stringify(entries));
       applications.forEach((application) => {
-        if (application.pdfFile) submission.append("pdf", application.pdfFile);
+        application.pdfFiles.forEach((file) => submission.append("pdf", file));
       });
 
       const response = await fetch(`${API_BASE}/submissions`, {
@@ -301,7 +309,7 @@ const WeeklyIntakeForm = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-3">
+    <div className="w-full px-3 py-3">
       <Dialog
         open={loginOpen}
         onOpenChange={(open) => {
@@ -357,7 +365,7 @@ const WeeklyIntakeForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {applications.map((application, index) => {
-          const { id, formData, pdfFile, pdfError } = application;
+          const { id, formData, pdfFiles, pdfError } = application;
           const inputId = `pdf-attachment-${id}`;
           const errorId = `pdf-error-${id}`;
           return (
@@ -380,50 +388,41 @@ const WeeklyIntakeForm = () => {
                     onChange={(event) => setWeekDate(event.target.value)}
                     className="h-7 w-28 px-2 py-0.5 text-xs md:text-xs"
                   />                  <label htmlFor={inputId} className="text-xs font-medium">
-                    PDF (optional, up to 10 MB):
+                    PDFs (optional, up to 10 MB each):
                   </label>
                   <Input
                     ref={(element) => { pdfInputRefs.current[id] = element; }}
                     id={inputId}
                     type="file"
                     accept="application/pdf,.pdf"
+                    multiple
                     aria-describedby={pdfError ? errorId : undefined}
                     aria-invalid={Boolean(pdfError)}
                     className="h-7 w-64 px-2 py-0.5 text-xs md:text-xs"
                     onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      handlePdfChange(id, file);
-                      if (
-                        file &&
-                        ((file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) ||
-                          file.size > MAX_PDF_SIZE_BYTES)
-                      ) {
-                        event.currentTarget.value = "";
-                      }
+                      handlePdfAdd(id, Array.from(event.target.files ?? []));
+                      event.currentTarget.value = "";
                     }}
                   />
-                  {pdfFile && (
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => setPreview({ url: URL.createObjectURL(pdfFile), name: pdfFile.name })}
-                    >
-                      View PDF{pdfFile.name ? ` (${pdfFile.name})` : ""}
-                    </button>
-                  )}
-                  {pdfFile && (
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => {
-                        handlePdfChange(id, undefined);
-                        const input = pdfInputRefs.current[id];
-                        if (input) input.value = "";
-                      }}
-                    >
-                      Remove PDF
-                    </button>
-                  )}
+                  {pdfFiles.map((file, fileIndex) => (
+                    <span key={`${file.name}-${file.size}`} className="flex items-center gap-1 text-xs">
+                      <button
+                        type="button"
+                        className="underline"
+                        onClick={() => setPreview({ url: URL.createObjectURL(file), name: file.name })}
+                      >
+                        View {file.name}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${file.name}`}
+                        className="underline"
+                        onClick={() => handlePdfRemove(id, fileIndex)}
+                      >
+                        Remove
+                      </button>
+                    </span>
+                  ))}
                   {pdfError && <span id={errorId} className="text-xs text-destructive">{pdfError}</span>}
                   {index === 0 && isAdmin && (
                     <Button

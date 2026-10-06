@@ -34,7 +34,10 @@ export const weekKeyFor = (weekDate, submittedAt) => {
 export const writeWeeklyCsv = (database, directory, weekKey) => {
   const latestByName = new Map();
   const rows = database
-    .prepare("SELECT id, submitted_at, week_date, form_data, pdf_name, pdf_size FROM weekly_intake_submissions ORDER BY id")
+    .prepare("SELECT id, submitted_at, week_date, form_data,
+        (SELECT group_concat(name, ' | ') FROM submission_files WHERE submission_id = weekly_intake_submissions.id) AS pdf_name,
+        (SELECT sum(size) FROM submission_files WHERE submission_id = weekly_intake_submissions.id) AS pdf_size
+       FROM weekly_intake_submissions ORDER BY id")
     .all()
     .filter((row) => weekKeyFor(row.week_date, row.submitted_at) === weekKey)
     .map(({ form_data, ...row }) => ({ ...row, ...JSON.parse(form_data) }));

@@ -22,7 +22,9 @@ const pdfDirectory = option("pdfs");
 
 const rows = database
   .prepare(
-    `SELECT id, submitted_at, week_date, form_data, pdf_name, pdf_size
+    `SELECT id, submitted_at, week_date, form_data,
+            (SELECT group_concat(name, ' | ') FROM submission_files WHERE submission_id = weekly_intake_submissions.id) AS pdf_name,
+            (SELECT sum(size) FROM submission_files WHERE submission_id = weekly_intake_submissions.id) AS pdf_size
      FROM weekly_intake_submissions
      ${week ? "WHERE week_date = ?" : ""}
      ORDER BY id`,
@@ -46,12 +48,13 @@ if (out) {
 
 if (pdfDirectory) {
   mkdirSync(pdfDirectory, { recursive: true });
-  const select = database.prepare("SELECT pdf_name, pdf_data FROM weekly_intake_submissions WHERE id = ?");
+  const select = database.prepare("SELECT id, name, data FROM submission_files WHERE submission_id = ? ORDER BY id");
   let saved = 0;
   for (const row of rows.filter((entry) => entry.pdf_name)) {
-    const { pdf_name, pdf_data } = select.get(row.id);
-    writeFileSync(path.join(pdfDirectory, `${row.id}-${pdf_name}`), pdf_data);
-    saved++;
+    for (const file of select.all(row.id)) {
+      writeFileSync(path.join(pdfDirectory, `${row.id}-${file.id}-${file.name}`), file.data);
+      saved++;
+    }
   }
   console.log(`Saved ${saved} PDF(s) to ${pdfDirectory}`);
 }

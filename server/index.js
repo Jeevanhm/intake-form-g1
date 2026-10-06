@@ -19,6 +19,8 @@ const BASE_PATH = (process.env.APP_BASE_PATH ?? "").replace(/\/+$/, "");
 const routePath = (route) => `${BASE_PATH}${route}`;
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_APPLICATIONS = 20;
+const MAX_FILES_PER_APPLICATION = 10;
+const MAX_FILES = MAX_APPLICATIONS * MAX_FILES_PER_APPLICATION;
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const databasePath = process.env.SQLITE_DB_PATH ?? path.join(projectRoot, "server", "data", "intake.sqlite");
 mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -36,17 +38,38 @@ database.exec(`
     pdf_name TEXT,
     pdf_data BLOB,
     pdf_size INTEGER
-  )
+  );
+  CREATE TABLE IF NOT EXISTS submission_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    submission_id INTEGER NOT NULL REFERENCES weekly_intake_submissions(id),
+    name TEXT NOT NULL,
+    data BLOB NOT NULL,
+    size INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS submission_files_submission ON submission_files(submission_id);
 `);
 
+// Move PDFs stored by earlier versions (one per submission) into the files table.
+database.transaction(() => {
+  database.exec(`
+    INSERT INTO submission_files (submission_id, name, data, size)
+    SELECT id, pdf_name, pdf_data, COALESCE(pdf_size, length(pdf_data))
+    FROM weekly_intake_submissions WHERE pdf_data IS NOT NULL AND pdf_name IS NOT NULL;
+    UPDATE weekly_intake_submissions SET pdf_data = NULL WHERE pdf_data IS NOT NULL;
+  `);
+})();
+
 const insertSubmission = database.prepare(`
-  INSERT INTO weekly_intake_submissions (week_date, form_data, pdf_name, pdf_data, pdf_size)
-  VALUES (@weekDate, @formData, @pdfName, @pdfData, @pdfSize)
+  INSERT INTO weekly_intake_submissions (week_date, form_data)
+  VALUES (@weekDate, @formData)
+`);
+const insertFile = database.prepare(`
+  INSERT INTO submission_files (submission_id, name, data, size) VALUES (@submissionId, @name, @data, @size)
 `);
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_PDF_SIZE_BYTES, files: MAX_APPLICATIONS, fields: 1, fieldSize: 256 * 1024 },
+  limits: { fileSize: MAX_PDF_SIZE_BYTES, files: MAX_FILES, fields: 1, fieldSize: 256 * 1024 },
   fileFilter: (_request, file, callback) => {
     if (file.mimetype !== "application/pdf" && !file.originalname.toLowerCase().endsWith(".pdf")) {
       callback(new Error("Choose a PDF file."));
@@ -63,7 +86,7 @@ const adminAuth = createAdminAuth(process.env.ADMIN_PASSWORD);
 app.post(routePath("/api/admin/login"), adminAuth.login);
 app.get(routePath("/api/admin/status"), adminAuth.status);
 
-app.post(routePath("/api/submissions"), upload.array("pdf", MAX_APPLICATIONS), (request, response) => {
+app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request, response) => {
   let submissions;
   try {
     submissions = JSON.parse(request.body.submission);
@@ -89,16 +112,15 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_APPLICATIONS), (
       !submission.formData ||
       typeof submission.formData !== "object" ||
       Array.isArray(submission.formData) ||
-      !(submission.pdfIndex === null || Number.isInteger(submission.pdfIndex))
+      !Array.isArray(submission.pdfIndexes) ||
+      submission.pdfIndexes.length > MAX_FILES_PER_APPLICATION
     ) {
       return false;
     }
 
-    if (submission.pdfIndex !== null) {
-      if (submission.pdfIndex < 0 || submission.pdfIndex >= files.length || pdfIndexes.has(submission.pdfIndex)) {
-        return false;
-      }
-      pdfIndexes.add(submission.pdfIndex);
+    for (const index of submission.pdfIndexes) {
+      if (!Number.isInteger(index) || index < 0 || index >= files.length || pdfIndexes.has(index)) return false;
+      pdfIndexes.add(index);
     }
     return true;
   });
@@ -115,15 +137,21 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_APPLICATIONS), (
 
   const insertBatch = database.transaction((entries) =>
     entries.map((submission) => {
-      const pdf = submission.pdfIndex === null ? null : files[submission.pdfIndex];
       const result = insertSubmission.run({
         weekDate: submission.weekDate,
         formData: JSON.stringify({ ...submission.formData, weekDate: submission.weekDate }),
-        pdfName: pdf ? path.basename(pdf.originalname.replaceAll("\\", "/")) : null,
-        pdfData: pdf?.buffer ?? null,
-        pdfSize: pdf?.size ?? null,
       });
-      return Number(result.lastInsertRowid);
+      const submissionId = Number(result.lastInsertRowid);
+      for (const index of submission.pdfIndexes) {
+        const pdf = files[index];
+        insertFile.run({
+          submissionId,
+          name: path.basename(pdf.originalname.replaceAll("\\", "/")),
+          data: pdf.buffer,
+          size: pdf.size,
+        });
+      }
+      return submissionId;
     }),
   );
 
@@ -140,26 +168,43 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_APPLICATIONS), (
   response.status(201).json({ ids });
 });
 
-app.get(routePath("/api/submissions/:id/pdf"), adminAuth.requireAdmin, (request, response) => {
-  const id = Number(request.params.id);
-  if (!Number.isSafeInteger(id) || id < 1) {
+const parseId = (value) => {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id >= 1 ? id : null;
+};
+
+app.get(routePath("/api/submissions/:id/pdfs"), adminAuth.requireAdmin, (request, response) => {
+  const id = parseId(request.params.id);
+  if (id === null) {
     response.status(400).json({ error: "The submission ID is invalid." });
+    return;
+  }
+  response.json({
+    files: database.prepare("SELECT id, name, size FROM submission_files WHERE submission_id = ? ORDER BY id").all(id),
+  });
+});
+
+app.get(routePath("/api/submissions/:id/pdfs/:fileId"), adminAuth.requireAdmin, (request, response) => {
+  const id = parseId(request.params.id);
+  const fileId = parseId(request.params.fileId);
+  if (id === null || fileId === null) {
+    response.status(400).json({ error: "The file ID is invalid." });
     return;
   }
 
   const pdf = database
-    .prepare("SELECT pdf_name, pdf_data FROM weekly_intake_submissions WHERE id = ?")
-    .get(id);
-  if (!pdf?.pdf_data) {
+    .prepare("SELECT name, data FROM submission_files WHERE id = ? AND submission_id = ?")
+    .get(fileId, id);
+  if (!pdf) {
     response.status(404).json({ error: "No PDF was found for this submission." });
     return;
   }
 
-  const safeName = encodeURIComponent(pdf.pdf_name).replaceAll("'", "%27");
+  const safeName = encodeURIComponent(pdf.name).replaceAll("'", "%27");
   response
     .type("application/pdf")
     .set("Content-Disposition", `attachment; filename*=UTF-8''${safeName}`)
-    .send(pdf.pdf_data);
+    .send(pdf.data);
 });
 
 app.use((error, _request, response, _next) => {
