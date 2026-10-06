@@ -358,7 +358,7 @@ const WeeklyIntakeForm = () => {
   const currentApplication = applications.find((application) => application.id === currentId) ?? applications[0];
 
   return (
-    <div className="w-full px-3 py-3">
+    <div className="flex min-h-0 w-full flex-1 flex-col px-3 py-2">
       <Dialog
         open={loginOpen}
         onOpenChange={(open) => {
@@ -412,9 +412,9 @@ const WeeklyIntakeForm = () => {
         </DialogContent>
       </Dialog>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col gap-2">
         {applications.length > 1 && (
-          <div role="tablist" className="flex flex-wrap gap-1">
+          <div role="tablist" className="flex shrink-0 flex-wrap gap-1">
             {applications.map((application, index) => (
               <button
                 key={application.id}
@@ -436,7 +436,7 @@ const WeeklyIntakeForm = () => {
           const inputId = `pdf-attachment-${id}`;
           const errorId = `pdf-error-${id}`;
           return (
-            <section key={id} hidden={id !== currentId} className="space-y-2 rounded-lg border p-3">
+            <section key={id} hidden={id !== currentId} className="min-h-0 flex-1 space-y-2 overflow-y-auto rounded-lg border p-3">
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <h2 className="text-base font-semibold">
                   Application {index + 1}{formData.appName ? `: ${formData.appName}` : ""}
@@ -617,13 +617,13 @@ const WeeklyIntakeForm = () => {
           );
         })}
 
-        <div className="flex flex-col items-center gap-2 pb-3">
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={addApplication}
             disabled={isSubmitting || applications.length >= MAX_APPLICATIONS}
-            className="w-full md:w-1/2"
+            className="px-6"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add another application
@@ -631,11 +631,11 @@ const WeeklyIntakeForm = () => {
           {applications.length >= MAX_APPLICATIONS && (
             <p className="text-sm text-muted-foreground">You can submit up to {MAX_APPLICATIONS} applications at once.</p>
           )}
-          {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}
+          {submitError && <p role="alert" className="w-full text-center text-sm text-destructive">{submitError}</p>}
           {applications.length > 1 && (
             <Button
               type="button"
-              className="w-full bg-blue-600 hover:bg-blue-700 md:w-1/2"
+              className="bg-blue-600 px-6 hover:bg-blue-700"
               disabled={isSubmitting}
               onClick={() => void submitApplications([currentApplication])}
             >
@@ -645,7 +645,7 @@ const WeeklyIntakeForm = () => {
           <Button
             type="submit"
             variant={applications.length > 1 ? "outline" : "default"}
-            className={`w-full md:w-1/2 ${applications.length > 1 ? "" : "bg-blue-600 hover:bg-blue-700"}`}
+            className={`px-6 ${applications.length > 1 ? "" : "bg-blue-600 hover:bg-blue-700"}`}
             disabled={isSubmitting}
           >
             {isSubmitting ? (

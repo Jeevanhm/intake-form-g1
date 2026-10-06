@@ -11,7 +11,7 @@ interface FormSectionProps {
 export const FormSection = ({ title, children, className }: FormSectionProps) => {
   return (
     <Card className={className}>
-      <CardHeader className="bg-blue-600 px-3 py-1">
+      <CardHeader className="bg-blue-400 px-3 py-1">
         <CardTitle className="text-center text-sm font-medium text-white">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5 p-3">{children}</CardContent>
