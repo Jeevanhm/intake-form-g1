@@ -390,7 +390,6 @@ const WeeklyIntakeForm = () => {
             <Button type="submit" className="w-full" disabled={isLoggingIn || !adminPassword}>
               {isLoggingIn ? "Signing in..." : "Sign in"}
             </Button>
-          )}
           </form>
         </DialogContent>
       </Dialog>
@@ -662,6 +661,7 @@ const WeeklyIntakeForm = () => {
               `Submit ${applications.length} application${applications.length === 1 ? "" : "s"}`
             )}
           </Button>
+          )}
         </div>
       </form>
     </div>
