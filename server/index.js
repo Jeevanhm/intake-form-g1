@@ -178,7 +178,14 @@ app.use((error, _request, response, _next) => {
 
 const distDirectory = path.join(projectRoot, "dist");
 if (BASE_PATH) {
-  app.get(BASE_PATH, (_request, response) => response.redirect(302, `${BASE_PATH}/`));
+  // Express matches BASE_PATH with or without a trailing slash, so only redirect the bare path.
+  app.get(BASE_PATH, (request, response, next) => {
+    if (request.path.endsWith("/")) {
+      next();
+      return;
+    }
+    response.redirect(302, `${BASE_PATH}/`);
+  });
   app.get("/", (_request, response) => response.redirect(302, `${BASE_PATH}/`));
 }
 app.use(BASE_PATH || "/", express.static(distDirectory));
