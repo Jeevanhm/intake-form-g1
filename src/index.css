@@ -91,6 +91,10 @@
 }
 
 @layer base {
+  /* Scale all rem-based sizes with the window so the form fills the screen. */
+  html {
+    font-size: clamp(16px, min(2.4vh, 1.25vw), 26px);
+  }
   * {
     @apply border-border;
   }
