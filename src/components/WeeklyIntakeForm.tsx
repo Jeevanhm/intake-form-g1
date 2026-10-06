@@ -21,6 +21,7 @@ import StorageNeedsSection from "./weekly-intake/StorageNeedsSection";
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_APPLICATIONS = 20;
 const ADMIN_TOKEN_KEY = "intake-admin-token";
+const API_BASE = `${import.meta.env.BASE_URL}api`;
 
 const createInitialFormData = () => ({
   appName: "",
@@ -110,7 +111,7 @@ const WeeklyIntakeForm = () => {
   // Drop a stored token that the server no longer accepts (expired or password changed).
   useEffect(() => {
     if (!adminToken) return;
-    fetch("/api/admin/status", { headers: { Authorization: `Bearer ${adminToken}` } })
+    fetch(`${API_BASE}/admin/status`, { headers: { Authorization: `Bearer ${adminToken}` } })
       .then((response) => response.json())
       .then((result: { admin?: boolean }) => { if (!result.admin) adminLogout(); })
       .catch(() => undefined);
@@ -122,7 +123,7 @@ const WeeklyIntakeForm = () => {
     setLoginError("");
     setIsLoggingIn(true);
     try {
-      const response = await fetch("/api/admin/login", {
+      const response = await fetch(`${API_BASE}/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: adminPassword }),
@@ -209,7 +210,7 @@ const WeeklyIntakeForm = () => {
         application.formData = formData as ApplicationFormData;
         if (record.pdf_name && /^\d+$/.test(record.id ?? "")) {
           try {
-            const pdfResponse = await fetch(`/api/submissions/${record.id}/pdf`, {
+            const pdfResponse = await fetch(`${API_BASE}/submissions/${record.id}/pdf`, {
               headers: { Authorization: `Bearer ${adminToken}` },
             });
             if (pdfResponse.status === 401) adminLogout();
@@ -278,7 +279,7 @@ const WeeklyIntakeForm = () => {
         if (application.pdfFile) submission.append("pdf", application.pdfFile);
       });
 
-      const response = await fetch("/api/submissions", {
+      const response = await fetch(`${API_BASE}/submissions`, {
         method: "POST",
         body: submission,
       });

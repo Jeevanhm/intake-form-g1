@@ -14,6 +14,9 @@ try {
 }
 
 const PORT = Number(process.env.API_PORT ?? 3001);
+const HOST = process.env.API_HOST ?? "127.0.0.1";
+const BASE_PATH = (process.env.APP_BASE_PATH ?? "").replace(/\/+$/, "");
+const routePath = (route) => `${BASE_PATH}${route}`;
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_APPLICATIONS = 20;
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
@@ -57,10 +60,10 @@ const app = express();
 app.use(express.json({ limit: "1kb" }));
 
 const adminAuth = createAdminAuth(process.env.ADMIN_PASSWORD);
-app.post("/api/admin/login", adminAuth.login);
-app.get("/api/admin/status", adminAuth.status);
+app.post(routePath("/api/admin/login"), adminAuth.login);
+app.get(routePath("/api/admin/status"), adminAuth.status);
 
-app.post("/api/submissions", upload.array("pdf", MAX_APPLICATIONS), (request, response) => {
+app.post(routePath("/api/submissions"), upload.array("pdf", MAX_APPLICATIONS), (request, response) => {
   let submissions;
   try {
     submissions = JSON.parse(request.body.submission);
@@ -137,7 +140,7 @@ app.post("/api/submissions", upload.array("pdf", MAX_APPLICATIONS), (request, re
   response.status(201).json({ ids });
 });
 
-app.get("/api/submissions/:id/pdf", adminAuth.requireAdmin, (request, response) => {
+app.get(routePath("/api/submissions/:id/pdf"), adminAuth.requireAdmin, (request, response) => {
   const id = Number(request.params.id);
   if (!Number.isSafeInteger(id) || id < 1) {
     response.status(400).json({ error: "The submission ID is invalid." });
@@ -174,14 +177,18 @@ app.use((error, _request, response, _next) => {
 });
 
 const distDirectory = path.join(projectRoot, "dist");
-app.use(express.static(distDirectory));
-app.get("/{*splat}", (_request, response, next) => {
+if (BASE_PATH) {
+  app.get(BASE_PATH, (_request, response) => response.redirect(302, `${BASE_PATH}/`));
+  app.get("/", (_request, response) => response.redirect(302, `${BASE_PATH}/`));
+}
+app.use(BASE_PATH || "/", express.static(distDirectory));
+app.get(routePath("/{*splat}"), (_request, response, next) => {
   response.sendFile(path.join(distDirectory, "index.html"), (error) => {
     if (error) next(error);
   });
 });
 
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`Intake API listening at http://127.0.0.1:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Intake API listening at http://${HOST}:${PORT}`);
   console.log(`SQLite database: ${databasePath}`);
 });

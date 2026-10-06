@@ -37,7 +37,17 @@ npm run build
 npm start
 ```
 
-The local SQLite server is intended for use on the same machine; it is not configured for multi-user hosting or network access.
+The server listens on `127.0.0.1:3001` by default. Set `API_PORT` to change the port and `API_HOST` to change the listen address. For example, `API_HOST=0.0.0.0 API_PORT=8444 npm start` makes it reachable on port 8444 via the server's network interfaces. This direct setup uses HTTP, not HTTPS; do not expose it to untrusted networks. For multi-user or external access, put it behind an HTTPS reverse proxy and configure appropriate access controls.
+
+## Deploying on RHEL 8
+
+The deployment script installs its RHEL packages, enables the RHEL 8 Node.js 20 module if needed, clones the repository to `/opt/intake-form` (or fast-forward pulls it if it is already cloned), and builds the app. Run it as root:
+
+```bash
+sudo bash deploy.sh
+```
+
+The script builds the app, configures the Node service to listen locally on `127.0.0.1:3001`, and configures Nginx to serve it at `https://10.113.130.18:8444/weeklyintake` with a self-signed TLS certificate. Browsers will warn until the certificate is trusted. SQLite and CSV exports are stored under `/var/lib/intake-form`. If it creates an admin password, it prints it once; save it securely. Permit inbound TCP port 8444 only from approved internal client networks.
 
 ## Technologies used
 
