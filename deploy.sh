@@ -24,7 +24,7 @@ for tool in dnf systemctl; do
   fi
 done
 
-dnf install -y git gcc-c++ make python3 nginx openssl policycoreutils-python-utils
+dnf install -y git gcc-c++ make nginx openssl policycoreutils-python-utils
 
 if ! command -v node >/dev/null 2>&1 || ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 20 ? 0 : 1)'; then
   dnf module reset -y nodejs
@@ -34,6 +34,25 @@ fi
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "npm was not found. Install it with the approved Node.js package, then rerun this script." >&2
+  exit 1
+fi
+
+if ! dnf install -y python3.11 python3.11-devel; then
+  echo "Python 3.11 packages are unavailable; trying the RHEL 8 Python 3.9 packages."
+  dnf install -y python39 python39-devel
+fi
+
+if command -v python3.11 >/dev/null 2>&1; then
+  NODE_GYP_PYTHON="$(command -v python3.11)"
+elif command -v python3.9 >/dev/null 2>&1; then
+  NODE_GYP_PYTHON="$(command -v python3.9)"
+else
+  echo "Python 3.9 or newer is required to compile better-sqlite3." >&2
+  exit 1
+fi
+
+if ! "$NODE_GYP_PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)'; then
+  echo "node-gyp requires Python 3.8 or newer; found $("$NODE_GYP_PYTHON" --version)." >&2
   exit 1
 fi
 
@@ -66,7 +85,7 @@ fi
 
 chown -R root:root "$APP_DIR"
 cd "$APP_DIR"
-npm ci
+npm_config_python="$NODE_GYP_PYTHON" npm ci
 APP_BASE_PATH="$APP_PATH" npm run build
 npm prune --omit=dev
 

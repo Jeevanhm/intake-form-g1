@@ -41,7 +41,7 @@ The server listens on `127.0.0.1:3001` by default. Set `API_PORT` to change the 
 
 ## Deploying on RHEL 8
 
-The deployment script installs its RHEL packages, enables the RHEL 8 Node.js 20 module if needed, clones the repository to `/opt/intake-form` (or fast-forward pulls it if it is already cloned), and builds the app. Run it as root:
+The deployment script installs its RHEL packages, enables the RHEL 8 Node.js 20 module if needed, installs Python 3.11 (or Python 3.9) for compiling the native SQLite dependency, clones the repository to `/opt/intake-form` (or fast-forward pulls it if it is already cloned), and builds the app. Run it as root:
 
 ```bash
 sudo bash deploy.sh
