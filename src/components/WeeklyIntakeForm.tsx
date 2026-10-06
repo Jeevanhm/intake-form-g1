@@ -119,6 +119,15 @@ const WeeklyIntakeForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [weeks, setWeeks] = useState<{ week: string; count: number }[]>([]);
+  useEffect(() => {
+    if (!adminToken) { setWeeks([]); return; }
+    fetch(`${API_BASE}/admin/weeks`, { headers: { Authorization: `Bearer ${adminToken}` } })
+      .then((response) => (response.ok ? response.json() : { weeks: [] }))
+      .then((result: { weeks: { week: string; count: number }[] }) => setWeeks(result.weeks))
+      .catch(() => undefined);
+  }, [adminToken]);
+
   const handleAdminLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoginError("");
@@ -194,11 +203,10 @@ const WeeklyIntakeForm = () => {
       pdfError: "",
     }));
   };
-  const handleCsvLoad = async (file: File | undefined) => {
-    if (!file || !adminToken) return;
+  const loadRecords = async (records: ReturnType<typeof parseCsv>) => {
+    if (!adminToken) return;
     setSubmitError("");
     try {
-      const records = parseCsv(await file.text());
       if (records.length === 0 || !("appName" in records[0])) {
         throw new Error("This CSV does not look like an intake export.");
       }
@@ -252,8 +260,35 @@ const WeeklyIntakeForm = () => {
       const message = error instanceof Error ? error.message : "Could not read the CSV file.";
       setSubmitError(message);
       toast.error(message);
+    }
+  };
+
+  const handleCsvLoad = async (file: File | undefined) => {
+    if (!file || !adminToken) return;
+    try {
+      await loadRecords(parseCsv(await file.text()));
+    } catch {
+      setSubmitError("Could not read the CSV file.");
+      toast.error("Could not read the CSV file.");
     } finally {
       if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  };
+
+  const handleWeekSelect = async (week: string) => {
+    if (!week || !adminToken) return;
+    try {
+      const response = await fetch(`${API_BASE}/admin/weeks/${week}`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      if (response.status === 401) adminLogout();
+      if (!response.ok) throw new Error("Could not load that week.");
+      const { records }: { records: ReturnType<typeof parseCsv> } = await response.json();
+      await loadRecords(records);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load that week.";
+      setSubmitError(message);
+      toast.error(message);
     }
   };
 
@@ -424,6 +459,22 @@ const WeeklyIntakeForm = () => {
                     </span>
                   ))}
                   {pdfError && <span id={errorId} className="text-xs text-destructive">{pdfError}</span>}
+                  {index === 0 && isAdmin && (
+                    <select
+                      aria-label="Review a week"
+                      className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                      value=""
+                      disabled={isSubmitting}
+                      onChange={(event) => handleWeekSelect(event.target.value)}
+                    >
+                      <option value="">Review week...</option>
+                      {weeks.map(({ week, count }) => (
+                        <option key={week} value={week}>
+                          Week of {week.slice(5, 7)}/{week.slice(8)}/{week.slice(0, 4)} ({count})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {index === 0 && isAdmin && (
                     <Button
                       type="button"

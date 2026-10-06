@@ -27,11 +27,9 @@ export const weekKeyFor = (weekDate, submittedAt) => {
   return weekStart(Number.isNaN(submitted.getTime()) ? new Date() : submitted);
 };
 
-// Rebuilds one week's CSV from the database, which is the source of truth. Everything here is
-// synchronous, so concurrent submissions are applied one after another and each rewrite includes
-// every row committed so far; the temp file + rename keeps readers from seeing a half-written file.
-// When an application name is submitted again in the same week, only the latest entry is kept.
-export const writeWeeklyCsv = (database, directory, weekKey) => {
+// The latest entry per application name for one week, oldest first. When an application name is
+// submitted again in the same week, only the latest entry is kept.
+export const getWeekRows = (database, weekKey) => {
   const latestByName = new Map();
   const rows = database
     .prepare(`SELECT id, submitted_at, week_date, form_data,
@@ -47,11 +45,32 @@ export const writeWeeklyCsv = (database, directory, weekKey) => {
     latestByName.set(name === "" ? `\0${index}` : name, row);
   });
 
+  return [...latestByName.values()].sort((a, b) => a.id - b.id);
+};
+
+export const listWeeks = (database) => {
+  const keys = new Set(
+    database
+      .prepare("SELECT submitted_at, week_date FROM weekly_intake_submissions")
+      .all()
+      .map((row) => weekKeyFor(row.week_date, row.submitted_at)),
+  );
+  return [...keys]
+    .sort()
+    .reverse()
+    .map((week) => ({ week, count: getWeekRows(database, week).length }));
+};
+
+// Rebuilds one week's CSV from the database, which is the source of truth. Everything here is
+// synchronous, so concurrent submissions are applied one after another and each rewrite includes
+// every row committed so far; the temp file + rename keeps readers from seeing a half-written file.
+export const writeWeeklyCsv = (database, directory, weekKey) => {
+  const rows = getWeekRows(database, weekKey);
   mkdirSync(directory, { recursive: true });
   const target = path.join(directory, `intake-week-${weekKey}.csv`);
   const temporary = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync(temporary, rowsToCsv([...latestByName.values()].sort((a, b) => a.id - b.id)));
+    writeFileSync(temporary, rowsToCsv(rows));
     renameSync(temporary, target);
   } catch (error) {
     try { unlinkSync(temporary); } catch { /* nothing to clean up */ }

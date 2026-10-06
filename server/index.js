@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync } from "node:fs";
-import { weekKeyFor, writeWeeklyCsv } from "./csv.js";
+import { getWeekRows, listWeeks, weekKeyFor, writeWeeklyCsv } from "./csv.js";
 import { createAdminAuth } from "./auth.js";
 
 try {
@@ -166,6 +166,22 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request
     console.error("Could not update the daily CSV:", error);
   }
   response.status(201).json({ ids });
+});
+
+app.get(routePath("/api/admin/weeks"), adminAuth.requireAdmin, (_request, response) => {
+  response.json({ weeks: listWeeks(database) });
+});
+
+app.get(routePath("/api/admin/weeks/:week"), adminAuth.requireAdmin, (request, response) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(request.params.week)) {
+    response.status(400).json({ error: "The week is invalid." });
+    return;
+  }
+  // Values are stringified to match the CSV format the form already knows how to load.
+  const records = getWeekRows(database, request.params.week).map((row) =>
+    Object.fromEntries(Object.entries(row).map(([key, value]) => [key, String(value ?? "")])),
+  );
+  response.json({ records });
 });
 
 const parseId = (value) => {
