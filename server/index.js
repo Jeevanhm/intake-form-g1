@@ -223,6 +223,36 @@ app.get(routePath("/api/submissions/:id/pdfs/:fileId"), adminAuth.requireAdmin, 
     .send(pdf.data);
 });
 
+app.delete(routePath("/api/submissions/:id"), adminAuth.requireAdmin, (request, response) => {
+  const id = parseId(request.params.id);
+  if (id === null) {
+    response.status(400).json({ error: "The submission ID is invalid." });
+    return;
+  }
+
+  const submission = database
+    .prepare("SELECT week_date, submitted_at FROM weekly_intake_submissions WHERE id = ?")
+    .get(id);
+  if (!submission) {
+    response.status(404).json({ error: "The application was not found." });
+    return;
+  }
+
+  try {
+    database.transaction(() => {
+      database.prepare("DELETE FROM submission_files WHERE submission_id = ?").run(id);
+      database.prepare("DELETE FROM weekly_intake_submissions WHERE id = ?").run(id);
+    })();
+
+    const week = weekKeyFor(submission.week_date, submission.submitted_at);
+    writeWeeklyCsv(database, csvDirectory, week);
+    response.json({ deleted: id });
+  } catch (error) {
+    console.error("Could not delete application:", error);
+    response.status(500).json({ error: "The application could not be deleted." });
+  }
+});
+
 app.use((error, _request, response, _next) => {
   if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
     response.status(413).json({ error: "The PDF must be 10 MB or smaller." });

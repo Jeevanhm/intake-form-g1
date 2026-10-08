@@ -30,6 +30,8 @@ npm run dev
 
 The development command starts both the Vite app and its local API. Add multiple applications to the same weekly review with **Add another application**, then submit them together. Each application is stored as a separate SQLite record with the shared review date and its own optional PDF attachment (up to 10 MB). You can submit up to 20 applications at once. The SQLite file is created automatically at `server/data/intake.sqlite` and is excluded from Git.
 
+Administrators can sign in from the form, load a saved week, and use **Delete saved application** to permanently remove an application and its PDF attachments from SQLite. The affected weekly CSV is regenerated after deletion. This action requires confirmation and cannot be undone, so back up the SQLite file before bulk cleanup.
+
 For a production-style local run, build the app and start the API server:
 
 ```powershell

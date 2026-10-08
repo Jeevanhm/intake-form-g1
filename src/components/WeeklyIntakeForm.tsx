@@ -71,6 +71,7 @@ type ApplicationFormData = ReturnType<typeof createInitialFormData>;
 
 interface ApplicationEntry {
   id: number;
+  databaseId?: number;
   formData: ApplicationFormData;
   pdfFiles: File[];
   pdfError: string;
@@ -231,6 +232,8 @@ const WeeklyIntakeForm = () => {
           else formData[key] = key === "requestor" && (raw === "true" || raw === "false") ? "" : raw;
         }
         const application = createApplication(nextApplicationId.current++);
+        const databaseId = Number(record.id);
+        if (Number.isSafeInteger(databaseId) && databaseId >= 1) application.databaseId = databaseId;
         application.formData = formData as ApplicationFormData;
         if (record.pdf_name && /^\d+$/.test(record.id ?? "")) {
           const headers = { Authorization: `Bearer ${adminToken}` };
@@ -307,6 +310,44 @@ const WeeklyIntakeForm = () => {
   const removeApplication = (id: number) => {
     setApplications((current) => current.filter((application) => application.id !== id));
     delete pdfInputRefs.current[id];
+  };
+
+  const deleteStoredApplication = async (application: ApplicationEntry) => {
+    if (!application.databaseId || !adminToken) return;
+    const name = application.formData.appName.trim() || "this application";
+    if (!window.confirm(`Delete ${name} permanently from the database? This also deletes its PDF attachments.`)) return;
+
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE}/submissions/${application.databaseId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const result: { error?: string } = await response.json();
+      if (response.status === 401) adminLogout();
+      if (!response.ok) throw new Error(result.error ?? "Could not delete the application.");
+
+      setApplications((current) => {
+        const remaining = current.filter((entry) => entry.id !== application.id);
+        return remaining.length > 0 ? remaining : [createApplication(nextApplicationId.current++)];
+      });
+      delete pdfInputRefs.current[application.id];
+      const weeksResponse = await fetch(`${API_BASE}/admin/weeks`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      if (weeksResponse.ok) {
+        const weeksResult: { weeks: { week: string; count: number }[] } = await weeksResponse.json();
+        setWeeks(weeksResult.weeks);
+      }
+      toast.success("Application deleted from the database.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not delete the application.";
+      setSubmitError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const submitApplications = async (toSubmit: ApplicationEntry[]) => {
@@ -435,7 +476,7 @@ const WeeklyIntakeForm = () => {
           </div>
         )}
         {applications.map((application, index) => {
-          const { id, formData, pdfFiles, pdfError } = application;
+          const { id, databaseId, formData, pdfFiles, pdfError } = application;
           const inputId = `pdf-attachment-${id}`;
           const errorId = `pdf-error-${id}`;
           return (
@@ -535,6 +576,19 @@ const WeeklyIntakeForm = () => {
                     >
                       <Trash2 className="mr-1 h-3 w-3" />
                       Remove application
+                    </Button>
+                  )}
+                  {isAdmin && databaseId && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => void deleteStoredApplication(application)}
+                      disabled={isSubmitting}
+                    >
+                      <Trash2 className="mr-1 h-3 w-3" />
+                      Delete saved application
                     </Button>
                   )}
                   {index === 0 && (
