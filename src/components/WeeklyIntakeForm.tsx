@@ -307,11 +307,6 @@ const WeeklyIntakeForm = () => {
     setActiveId(id);
   };
 
-  const removeApplication = (id: number) => {
-    setApplications((current) => current.filter((application) => application.id !== id));
-    delete pdfInputRefs.current[id];
-  };
-
   const deleteStoredApplication = async (application: ApplicationEntry) => {
     if (!application.databaseId || !adminToken) return;
     const name = application.formData.appName.trim() || "this application";
@@ -574,31 +569,18 @@ const WeeklyIntakeForm = () => {
                       Load from CSV
                     </Button>
                   )}
-                  {applications.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => removeApplication(id)}
-                      disabled={isSubmitting}
-                      aria-label={`Remove application ${index + 1}`}
-                    >
-                      <Trash2 className="mr-1 h-3 w-3" />
-                      Remove application
-                    </Button>
-                  )}
                   {isAdmin && databaseId && (
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="h-7 px-2 text-xs"
+                      className="h-6 px-1.5 text-[10px]"
                       onClick={() => void deleteStoredApplication(application)}
                       disabled={isSubmitting}
+                      aria-label={`Delete saved application ${index + 1}`}
                     >
-                      <Trash2 className="mr-1 h-3 w-3" />
-                      Delete saved application
+                      <Trash2 className="mr-1 h-2.5 w-2.5" />
+                      Delete saved
                     </Button>
                   )}
                   {index === 0 && (
