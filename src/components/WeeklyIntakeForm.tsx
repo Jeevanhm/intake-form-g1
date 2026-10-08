@@ -307,6 +307,11 @@ const WeeklyIntakeForm = () => {
     setActiveId(id);
   };
 
+  const removeApplication = (id: number) => {
+    setApplications((current) => current.filter((application) => application.id !== id));
+    delete pdfInputRefs.current[id];
+  };
+
   const deleteStoredApplication = async (application: ApplicationEntry) => {
     if (!application.databaseId || !adminToken) return;
     const name = application.formData.appName.trim() || "this application";
@@ -514,7 +519,7 @@ const WeeklyIntakeForm = () => {
                     multiple
                     aria-describedby={pdfError ? errorId : undefined}
                     aria-invalid={Boolean(pdfError)}
-                    className="h-6 w-44 px-1.5 py-0.5 text-[10px] md:text-[10px]"
+                    className="h-6 w-44 px-1.5 py-0.5 text-[10px] file:mr-1 file:h-5 file:px-1 file:text-[10px] md:text-[10px]"
                     onChange={(event) => {
                       handlePdfAdd(id, Array.from(event.target.files ?? []));
                       event.currentTarget.value = "";
@@ -567,6 +572,20 @@ const WeeklyIntakeForm = () => {
                     >
                       <Upload className="mr-1 h-3 w-3" />
                       Load from CSV
+                    </Button>
+                  )}
+                  {applications.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-1.5 text-[10px]"
+                      onClick={() => removeApplication(id)}
+                      disabled={isSubmitting}
+                      aria-label={`Remove application ${index + 1}`}
+                    >
+                      <Trash2 className="mr-1 h-2.5 w-2.5" />
+                      Remove application
                     </Button>
                   )}
                   {isAdmin && databaseId && (
