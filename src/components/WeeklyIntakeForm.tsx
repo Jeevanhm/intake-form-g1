@@ -504,7 +504,7 @@ const WeeklyIntakeForm = () => {
                     onChange={(event) => setWeekDate(event.target.value)}
                     className="h-7 w-28 px-2 py-0.5 text-xs md:text-xs"
                   />                  <label htmlFor={inputId} className="text-xs font-medium">
-                    PDFs (optional, up to 10 MB each):
+                    PDFs:
                   </label>
                   <Input
                     ref={(element) => { pdfInputRefs.current[id] = element; }}
@@ -514,7 +514,7 @@ const WeeklyIntakeForm = () => {
                     multiple
                     aria-describedby={pdfError ? errorId : undefined}
                     aria-invalid={Boolean(pdfError)}
-                    className="h-7 w-64 px-2 py-0.5 text-xs md:text-xs"
+                    className="h-6 w-44 px-1.5 py-0.5 text-[10px] md:text-[10px]"
                     onChange={(event) => {
                       handlePdfAdd(id, Array.from(event.target.files ?? []));
                       event.currentTarget.value = "";
