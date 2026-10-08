@@ -324,7 +324,7 @@ const WeeklyIntakeForm = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${adminToken}` },
       });
-      const result: { error?: string } = await response.json();
+      const result: { error?: string; csvUpdated?: boolean; warning?: string } = await response.json();
       if (response.status === 401) adminLogout();
       if (!response.ok) throw new Error(result.error ?? "Could not delete the application.");
 
@@ -333,14 +333,24 @@ const WeeklyIntakeForm = () => {
         return remaining.length > 0 ? remaining : [createApplication(nextApplicationId.current++)];
       });
       delete pdfInputRefs.current[application.id];
-      const weeksResponse = await fetch(`${API_BASE}/admin/weeks`, {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      });
-      if (weeksResponse.ok) {
-        const weeksResult: { weeks: { week: string; count: number }[] } = await weeksResponse.json();
-        setWeeks(weeksResult.weeks);
+      if (result.csvUpdated === false) {
+        toast.warning(result.warning ?? "Application deleted, but the weekly CSV could not be updated.");
+      } else {
+        toast.success("Application deleted from the database.");
       }
-      toast.success("Application deleted from the database.");
+
+      try {
+        const weeksResponse = await fetch(`${API_BASE}/admin/weeks`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        if (weeksResponse.status === 401) adminLogout();
+        if (weeksResponse.ok) {
+          const weeksResult: { weeks: { week: string; count: number }[] } = await weeksResponse.json();
+          setWeeks(weeksResult.weeks);
+        }
+      } catch (error) {
+        console.error("Could not refresh the review weeks after deletion:", error);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not delete the application.";
       setSubmitError(message);

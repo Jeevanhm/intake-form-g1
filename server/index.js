@@ -243,14 +243,26 @@ app.delete(routePath("/api/submissions/:id"), adminAuth.requireAdmin, (request, 
       database.prepare("DELETE FROM submission_files WHERE submission_id = ?").run(id);
       database.prepare("DELETE FROM weekly_intake_submissions WHERE id = ?").run(id);
     })();
-
-    const week = weekKeyFor(submission.week_date, submission.submitted_at);
-    writeWeeklyCsv(database, csvDirectory, week);
-    response.json({ deleted: id });
   } catch (error) {
     console.error("Could not delete application:", error);
     response.status(500).json({ error: "The application could not be deleted." });
+    return;
   }
+
+  let csvUpdated = true;
+  try {
+    const week = weekKeyFor(submission.week_date, submission.submitted_at);
+    writeWeeklyCsv(database, csvDirectory, week);
+  } catch (error) {
+    csvUpdated = false;
+    console.error("Application deleted, but the weekly CSV could not be updated:", error);
+  }
+
+  response.json({
+    deleted: id,
+    csvUpdated,
+    ...(csvUpdated ? {} : { warning: "The application was deleted, but the weekly CSV could not be updated." }),
+  });
 });
 
 app.use((error, _request, response, _next) => {
