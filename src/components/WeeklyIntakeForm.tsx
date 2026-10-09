@@ -519,7 +519,7 @@ const WeeklyIntakeForm = () => {
                     multiple
                     aria-describedby={pdfError ? errorId : undefined}
                     aria-invalid={Boolean(pdfError)}
-                    className="h-6 w-44 px-1.5 py-0.5 text-[10px] file:mr-1 file:h-5 file:px-1 file:text-[10px] md:text-[10px]"
+                    className="h-6 w-44 px-1.5 py-0.5 text-xs file:mr-1 file:h-5 file:px-1 file:text-xs"
                     onChange={(event) => {
                       handlePdfAdd(id, Array.from(event.target.files ?? []));
                       event.currentTarget.value = "";
