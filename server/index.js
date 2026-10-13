@@ -87,7 +87,7 @@ app.post(routePath("/api/admin/login"), adminAuth.login);
 app.get(routePath("/api/admin/status"), adminAuth.status);
 
 const isApproved = (row) => String(row.approved ?? "").trim().toLowerCase() === "yes";
-const includeApproved = (request) => request.query.includeApproved === "true";
+const approvedOnly = (request) => request.query.approvedOnly === "true";
 
 app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request, response) => {
   let submissions;
@@ -172,11 +172,11 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request
 });
 
 app.get(routePath("/api/admin/weeks"), adminAuth.requireAdmin, (request, response) => {
-  const showApproved = includeApproved(request);
+  const showApproved = approvedOnly(request);
   const weeks = listWeeks(database)
     .map(({ week }) => ({
       week,
-      count: getWeekRows(database, week).filter((row) => showApproved || !isApproved(row)).length,
+      count: getWeekRows(database, week).filter((row) => (showApproved ? isApproved(row) : !isApproved(row))).length,
     }))
     .filter(({ count }) => count > 0);
   response.json({ weeks });
@@ -189,7 +189,7 @@ app.get(routePath("/api/admin/weeks/:week"), adminAuth.requireAdmin, (request, r
   }
   // Values are stringified to match the CSV format the form already knows how to load.
   const records = getWeekRows(database, request.params.week)
-    .filter((row) => includeApproved(request) || !isApproved(row))
+    .filter((row) => (approvedOnly(request) ? isApproved(row) : !isApproved(row)))
     .map((row) =>
       Object.fromEntries(Object.entries(row).map(([key, value]) => [key, String(value ?? "")])),
     );

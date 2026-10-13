@@ -129,7 +129,7 @@ const WeeklyIntakeForm = () => {
   const [selectedWeek, setSelectedWeek] = useState("");
   useEffect(() => {
     if (!adminToken) { setWeeks([]); return; }
-    const approvedQuery = showApproved ? "?includeApproved=true" : "";
+    const approvedQuery = showApproved ? "?approvedOnly=true" : "";
     fetch(`${API_BASE}/admin/weeks${approvedQuery}`, { headers: { Authorization: `Bearer ${adminToken}` } })
       .then((response) => (response.ok ? response.json() : { weeks: [] }))
       .then((result: { weeks: { week: string; count: number }[] }) => setWeeks(result.weeks))
@@ -286,10 +286,10 @@ const WeeklyIntakeForm = () => {
     }
   };
 
-  const handleWeekSelect = async (week: string, includeApproved = showApproved) => {
+  const handleWeekSelect = async (week: string, approvedOnly = showApproved) => {
     if (!week || !adminToken) return;
     try {
-      const approvedQuery = includeApproved ? "?includeApproved=true" : "";
+      const approvedQuery = approvedOnly ? "?approvedOnly=true" : "";
       const response = await fetch(`${API_BASE}/admin/weeks/${week}${approvedQuery}`, {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
@@ -359,7 +359,7 @@ const WeeklyIntakeForm = () => {
       }
 
       try {
-        const approvedQuery = showApproved ? "?includeApproved=true" : "";
+        const approvedQuery = showApproved ? "?approvedOnly=true" : "";
         const weeksResponse = await fetch(`${API_BASE}/admin/weeks${approvedQuery}`, {
           headers: { Authorization: `Bearer ${adminToken}` },
         });
