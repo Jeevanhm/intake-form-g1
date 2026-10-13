@@ -65,6 +65,7 @@ const createInitialFormData = () => ({
   onPremVolume: "",
   otherNotes: "",
   approved: "",
+  approverName: "",
 });
 
 type ApplicationFormData = ReturnType<typeof createInitialFormData>;
@@ -526,6 +527,18 @@ const WeeklyIntakeForm = () => {
                     value={formData.approved}
                     onChange={(value) => handleInputChange(id, "approved", value)}
                   />
+                  {formData.approved === "Yes" && (
+                    <>
+                      <label htmlFor={`approver-name-${id}`} className="text-xs font-medium">Approver:</label>
+                      <Input
+                        id={`approver-name-${id}`}
+                        value={formData.approverName}
+                        onChange={(event) => handleInputChange(id, "approverName", event.target.value)}
+                        placeholder="Name"
+                        className="h-7 w-32 px-2 py-0.5 text-xs md:text-xs"
+                      />
+                    </>
+                  )}
                   <label htmlFor={`week-date-${id}`} className="text-xs font-medium">Date:</label>
                   <Input
                     id={`week-date-${id}`}
