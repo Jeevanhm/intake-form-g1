@@ -411,7 +411,13 @@ const WeeklyIntakeForm = () => {
       const submittedIds = new Set(toSubmit.map((application) => application.id));
       const remaining = applications.filter((application) => !submittedIds.has(application.id));
       for (const id of submittedIds) delete pdfInputRefs.current[id];
-      setApplications(remaining.length > 0 ? remaining : [createApplication(nextApplicationId.current++)]);
+      if (remaining.length > 0) {
+        setApplications(remaining);
+      } else {
+        setApplications([createApplication(nextApplicationId.current++)]);
+        setWeekDate(format(new Date(), "MM/dd/yyyy"));
+        setSelectedWeek("");
+      }
     } catch (error) {
       console.error("Error in form submission:", error);
       setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred. Please try again.");
