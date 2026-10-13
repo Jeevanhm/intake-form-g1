@@ -125,13 +125,16 @@ const WeeklyIntakeForm = () => {
   }, []);
 
   const [weeks, setWeeks] = useState<{ week: string; count: number }[]>([]);
+  const [showApproved, setShowApproved] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState("");
   useEffect(() => {
     if (!adminToken) { setWeeks([]); return; }
-    fetch(`${API_BASE}/admin/weeks`, { headers: { Authorization: `Bearer ${adminToken}` } })
+    const approvedQuery = showApproved ? "?includeApproved=true" : "";
+    fetch(`${API_BASE}/admin/weeks${approvedQuery}`, { headers: { Authorization: `Bearer ${adminToken}` } })
       .then((response) => (response.ok ? response.json() : { weeks: [] }))
       .then((result: { weeks: { week: string; count: number }[] }) => setWeeks(result.weeks))
       .catch(() => undefined);
-  }, [adminToken]);
+  }, [adminToken, showApproved]);
 
   const handleAdminLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -283,21 +286,37 @@ const WeeklyIntakeForm = () => {
     }
   };
 
-  const handleWeekSelect = async (week: string) => {
+  const handleWeekSelect = async (week: string, includeApproved = showApproved) => {
     if (!week || !adminToken) return;
     try {
-      const response = await fetch(`${API_BASE}/admin/weeks/${week}`, {
+      const approvedQuery = includeApproved ? "?includeApproved=true" : "";
+      const response = await fetch(`${API_BASE}/admin/weeks/${week}${approvedQuery}`, {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (response.status === 401) adminLogout();
       if (!response.ok) throw new Error("Could not load that week.");
       const { records }: { records: ReturnType<typeof parseCsv> } = await response.json();
+      if (records.length === 0) {
+        setApplications([createApplication(nextApplicationId.current++)]);
+        setActiveId(nextApplicationId.current - 1);
+        pdfInputRefs.current = {};
+        setSelectedWeek(week);
+        toast.info("No applications match the current approval filter.");
+        return;
+      }
       await loadRecords(records);
+      setSelectedWeek(week);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load that week.";
       setSubmitError(message);
       toast.error(message);
     }
+  };
+
+  const toggleApprovedApplications = () => {
+    const nextShowApproved = !showApproved;
+    setShowApproved(nextShowApproved);
+    if (selectedWeek) void handleWeekSelect(selectedWeek, nextShowApproved);
   };
 
   const addApplication = () => {
@@ -340,7 +359,8 @@ const WeeklyIntakeForm = () => {
       }
 
       try {
-        const weeksResponse = await fetch(`${API_BASE}/admin/weeks`, {
+        const approvedQuery = showApproved ? "?includeApproved=true" : "";
+        const weeksResponse = await fetch(`${API_BASE}/admin/weeks${approvedQuery}`, {
           headers: { Authorization: `Bearer ${adminToken}` },
         });
         if (weeksResponse.status === 401) adminLogout();
@@ -549,7 +569,7 @@ const WeeklyIntakeForm = () => {
                     <select
                       aria-label="Review a week"
                       className="h-7 rounded-md border border-input bg-background px-2 text-xs"
-                      value=""
+                      value={selectedWeek}
                       disabled={isSubmitting}
                       onChange={(event) => handleWeekSelect(event.target.value)}
                     >
@@ -560,6 +580,18 @@ const WeeklyIntakeForm = () => {
                         </option>
                       ))}
                     </select>
+                  )}
+                  {index === 0 && isAdmin && (
+                    <Button
+                      type="button"
+                      variant={showApproved ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      disabled={isSubmitting}
+                      onClick={toggleApprovedApplications}
+                    >
+                      {showApproved ? "Hide approved" : "Show approved"}
+                    </Button>
                   )}
                   {index === 0 && isAdmin && (
                     <Button

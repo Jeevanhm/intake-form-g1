@@ -26,6 +26,7 @@ const StorageNeedsSection = ({ formData, handleInputChange, handleToggleChange }
           <option value="ANF">ANF</option>
           <option value="Blob">Blob</option>
           <option value="Managed Disk">Managed Disk</option>
+          <option value="NA">NA</option>
         </select>
       </Field>
 

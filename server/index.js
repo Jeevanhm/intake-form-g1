@@ -86,6 +86,9 @@ const adminAuth = createAdminAuth(process.env.ADMIN_PASSWORD);
 app.post(routePath("/api/admin/login"), adminAuth.login);
 app.get(routePath("/api/admin/status"), adminAuth.status);
 
+const isApproved = (row) => String(row.approved ?? "").trim().toLowerCase() === "yes";
+const includeApproved = (request) => request.query.includeApproved === "true";
+
 app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request, response) => {
   let submissions;
   try {
@@ -168,8 +171,15 @@ app.post(routePath("/api/submissions"), upload.array("pdf", MAX_FILES), (request
   response.status(201).json({ ids });
 });
 
-app.get(routePath("/api/admin/weeks"), adminAuth.requireAdmin, (_request, response) => {
-  response.json({ weeks: listWeeks(database) });
+app.get(routePath("/api/admin/weeks"), adminAuth.requireAdmin, (request, response) => {
+  const showApproved = includeApproved(request);
+  const weeks = listWeeks(database)
+    .map(({ week }) => ({
+      week,
+      count: getWeekRows(database, week).filter((row) => showApproved || !isApproved(row)).length,
+    }))
+    .filter(({ count }) => count > 0);
+  response.json({ weeks });
 });
 
 app.get(routePath("/api/admin/weeks/:week"), adminAuth.requireAdmin, (request, response) => {
@@ -178,9 +188,11 @@ app.get(routePath("/api/admin/weeks/:week"), adminAuth.requireAdmin, (request, r
     return;
   }
   // Values are stringified to match the CSV format the form already knows how to load.
-  const records = getWeekRows(database, request.params.week).map((row) =>
-    Object.fromEntries(Object.entries(row).map(([key, value]) => [key, String(value ?? "")])),
-  );
+  const records = getWeekRows(database, request.params.week)
+    .filter((row) => includeApproved(request) || !isApproved(row))
+    .map((row) =>
+      Object.fromEntries(Object.entries(row).map(([key, value]) => [key, String(value ?? "")])),
+    );
   response.json({ records });
 });
 
